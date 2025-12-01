@@ -1,4 +1,4 @@
-# Zump.fun 👻🚀
+# 🐸 Zump.fun 
 
 **The first on-chain untraceable, unidentifiable, hidden identity-based trading platform on Starknet**
 
@@ -8,7 +8,7 @@ Powered by **Noir zkContracts** + **Garaga accelerated proofs** + **Ztarknet enc
 
 ## 📋 Overview
 
-**Zump.fun** is the world's first fully private memecoin launchpad on StarkNet, where every transaction is anonymous, untraceable, and unidentifiable. Built with cutting-edge zero-knowledge technology, Zump.fun enables traders to launch and trade memecoins without exposing their identity or wallet addresses.
+**Zump.fun** is the world's first fully privacy focused memecoin launchpad on StarkNet, where every transaction is anonymous, untraceable, and unidentifiable. Built with cutting-edge zero-knowledge technology, Zump.fun enables traders to launch and trade memecoins without exposing their identity/primary wallet addresses.
 
 ### 🔒 The Privacy Problem
 
@@ -40,16 +40,6 @@ Financial privacy in blockchain is fundamentally broken:
 - ✅ Automatic DEX migration at threshold
 - ✅ Zero wallet linkability between primary and stealth accounts
 - ✅ Nullifier-based transaction privacy
-
-### 🔮 Future Expansion (V2+)
-
-- 💳 **Private Credit/Debit Card Payments** - Spend crypto privately
-- 🌉 **Private Cross-Chain Bridges** - Move assets without traces
-- 🗑️ **Disposable Wallets** - Use once and discard
-- 🏦 **Hedge Fund Privacy** - Institutional-grade private trading
-- 🛡️ **Anti-Doxxing Protection** - No more James Wynn or Hyperliquid reveals
-- 🔄 **Enhanced Mixing** - Multi-layer privacy protocols
-- 🎯 **Private Governance** - Anonymous DAO participation
 
 ## 🏗️ Architecture
 
@@ -182,7 +172,7 @@ graph LR
 
 ### On-chain Contracts
 
-1. **MemecoinToken** - ZK-ERC20 token with private mint/burn via zero-knowledge proofs
+1. **MemecoinToken** - ZK token with private mint/burn via zero-knowledge proofs
 2. **BondingCurvePool** - Private trading pool with encrypted state and nullifier checks
 3. **PumpFactory** - Anonymous launch registry with stealth address support
 4. **ProtocolConfig** - Encrypted protocol variables with ZK-based access control
@@ -194,7 +184,7 @@ graph LR
 
 | Contract | Responsibility | Privacy Feature |
 |----------|---------------|-----------------|
-| MemecoinToken | ZK-ERC20 with private mint/burn | Encrypted balances, nullifier-based transfers |
+| MemecoinToken | ZK with private mint/burn | Encrypted balances, nullifier-based transfers |
 | BondingCurvePool | Private bonding curve trading | Hidden reserves, ZK price proofs |
 | PumpFactory | Anonymous launch registry | Stealth address deployment, unlinkable launches |
 | ProtocolConfig | Encrypted global config | ZK-based parameter updates |
@@ -1090,14 +1080,6 @@ flowchart LR
 - [Cairo Book](https://book.cairo-lang.org/)
 - [Scarb Documentation](https://docs.swmansion.com/scarb/)
 - [StarkNet.js](https://www.starknetjs.com/)
-
-## 🤝 Contributing
-
-This is a hackathon project. Contributions and improvements are welcome!
-
-## 📄 License
-
-MIT
 
 ## 🎯 Vision & Roadmap
 
