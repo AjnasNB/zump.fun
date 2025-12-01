@@ -110,7 +110,7 @@
             "reviewCount": 2034
         }],
         "category": "Accessories",
-        "available": 0,
+        "available": 1000000,
         "priceSale": 83.74,
         "taxes": 10,
         "quantity": 80,
@@ -926,7 +926,7 @@
             "reviewCount": 2034
         }],
         "category": "Accessories",
-        "available": 0,
+        "available": 1000000,
         "priceSale": 43.84,
         "taxes": 10,
         "quantity": 80,
@@ -1742,7 +1742,7 @@
             "reviewCount": 2034
         }],
         "category": "Accessories",
-        "available": 0,
+        "available": 1000000,
         "priceSale": 64.55,
         "taxes": 10,
         "quantity": 80,
@@ -2558,7 +2558,7 @@
             "reviewCount": 2034
         }],
         "category": "Accessories",
-        "available": 0,
+        "available": 1000000,
         "priceSale": 76.24,
         "taxes": 10,
         "quantity": 80,
