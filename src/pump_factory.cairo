@@ -1,0 +1,120 @@
+use starknet::ContractAddress;
+use starknet::get_caller_address;
+
+#[derive(Copy, Drop, Serde, starknet::Store)]
+struct LaunchInfo {
+    token: ContractAddress,
+    pool: ContractAddress,
+    creator: ContractAddress,
+    name: felt252,
+    symbol: felt252,
+    base_price: u256,
+    slope: u256,
+    max_supply: u256,
+    migrated: bool,
+}
+
+#[starknet::contract]
+mod PumpFactory {
+    use super::{ContractAddress, get_caller_address, LaunchInfo};
+    use starknet::StorageAccess;
+
+    #[storage]
+    struct Storage {
+        launches: LegacyMap<u256, LaunchInfo>,
+        launch_count: u256,
+        owner: ContractAddress,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        LaunchRegistered: LaunchRegistered,
+        LaunchMigrated: LaunchMigrated,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct LaunchRegistered {
+        #[key]
+        launch_id: u256,
+        token: ContractAddress,
+        pool: ContractAddress,
+        creator: ContractAddress,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct LaunchMigrated {
+        #[key]
+        launch_id: u256,
+    }
+
+    #[constructor]
+    fn constructor(ref self: ContractState, owner: ContractAddress) {
+        self.owner.write(owner);
+        self.launch_count.write(0);
+    }
+
+    #[view]
+    fn owner(self: @ContractState) -> ContractAddress {
+        self.owner.read()
+    }
+
+    #[view]
+    fn total_launches(self: @ContractState) -> u256 {
+        self.launch_count.read()
+    }
+
+    #[view]
+    fn get_launch(
+        self: @ContractState,
+        launch_id: u256
+    ) -> LaunchInfo {
+        self.launches.read(launch_id)
+    }
+
+    // For PoC: called by off-chain script after deploying MemecoinToken + BondingCurvePool
+    #[external(v0)]
+    fn register_launch(
+        ref self: ContractState,
+        token: ContractAddress,
+        pool: ContractAddress,
+        name: felt252,
+        symbol: felt252,
+        base_price: u256,
+        slope: u256,
+        max_supply: u256
+    ) -> u256 {
+        let creator = get_caller_address();
+        let id = self.launch_count.read();
+        let info = LaunchInfo {
+            token,
+            pool,
+            creator,
+            name,
+            symbol,
+            base_price,
+            slope,
+            max_supply,
+            migrated: false,
+        };
+        self.launches.write(id, info);
+        self.launch_count.write(id + 1);
+        self.emit(LaunchRegistered { launch_id: id, token, pool, creator });
+        id
+    }
+
+    // Called by LiquidityMigration later
+    #[external(v0)]
+    fn mark_migrated(
+        ref self: ContractState,
+        launch_id: u256
+    ) {
+        let caller = get_caller_address();
+        // TODO: restrict to LiquidityMigration contract in prod
+        let mut info = self.launches.read(launch_id);
+        info.migrated = true;
+        self.launches.write(launch_id, info);
+        self.emit(LaunchMigrated { launch_id });
+    }
+}
+

@@ -1,0 +1,10 @@
+[package]
+name = "pump_fun"
+version = "0.1.0"
+edition = "2024_01"
+
+[dependencies]
+starknet = ">=2.3.0"
+
+[[target.starknet-contract]]
+

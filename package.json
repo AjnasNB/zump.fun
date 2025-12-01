@@ -1,0 +1,31 @@
+{
+  "name": "pump-fun-starknet",
+  "version": "1.0.0",
+  "description": "Pump.fun style memecoin launchpad on Starknet",
+  "scripts": {
+    "build": "scarb build",
+    "test": "scarb test",
+    "deploy": "ts-node scripts/deploy.ts",
+    "create-launch": "ts-node scripts/create_launch.ts",
+    "interact": "ts-node scripts/interact.ts",
+    "format": "scarb fmt",
+    "check": "scarb fmt --check"
+  },
+  "keywords": [
+    "starknet",
+    "cairo",
+    "memecoin",
+    "bonding-curve",
+    "defi"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "dotenv": "^16.3.1",
+    "starknet": "^6.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
+
