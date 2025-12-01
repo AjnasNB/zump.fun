@@ -17,11 +17,14 @@ struct LaunchInfo {
 #[starknet::contract]
 mod PumpFactory {
     use super::{ContractAddress, get_caller_address, LaunchInfo};
-    use starknet::StorageAccess;
+    use starknet::storage::{
+        StoragePointerReadAccess, StoragePointerWriteAccess,
+        StorageMapReadAccess, StorageMapWriteAccess
+    };
 
     #[storage]
     struct Storage {
-        launches: LegacyMap<u256, LaunchInfo>,
+        launches: Map<u256, LaunchInfo>,
         launch_count: u256,
         owner: ContractAddress,
     }
@@ -112,8 +115,18 @@ mod PumpFactory {
         let caller = get_caller_address();
         // TODO: restrict to LiquidityMigration contract in prod
         let mut info = self.launches.read(launch_id);
-        info.migrated = true;
-        self.launches.write(launch_id, info);
+        let mut updated_info = LaunchInfo {
+            token: info.token,
+            pool: info.pool,
+            creator: info.creator,
+            name: info.name,
+            symbol: info.symbol,
+            base_price: info.base_price,
+            slope: info.slope,
+            max_supply: info.max_supply,
+            migrated: true,
+        };
+        self.launches.write(launch_id, updated_info);
         self.emit(LaunchMigrated { launch_id });
     }
 }

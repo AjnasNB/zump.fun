@@ -4,7 +4,7 @@ use starknet::get_caller_address;
 #[starknet::contract]
 mod ProtocolConfig {
     use super::{ContractAddress, get_caller_address};
-    use starknet::StorageAccess;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 
     #[storage]
     struct Storage {

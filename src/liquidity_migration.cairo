@@ -19,7 +19,7 @@ mod LiquidityMigration {
         IBondingCurvePoolDispatcher, IBondingCurvePoolDispatcherTrait,
         IFactoryDispatcher, IFactoryDispatcherTrait
     };
-    use starknet::StorageAccess;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 
     #[storage]
     struct Storage {

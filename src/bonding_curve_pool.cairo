@@ -37,7 +37,7 @@ mod BondingCurvePool {
         ContractAddress, get_caller_address,
         IERC20Dispatcher, IERC20DispatcherTrait, IProtocolConfigDispatcher, IProtocolConfigDispatcherTrait
     };
-    use starknet::StorageAccess;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 
     #[storage]
     struct Storage {
@@ -109,6 +109,7 @@ mod BondingCurvePool {
     }
 
     // Basic linear price: base + slope * tokens_sold
+    #[view]
     fn current_price(self: @ContractState) -> u256 {
         let base = self.base_price.read();
         let slope = self.slope.read();
