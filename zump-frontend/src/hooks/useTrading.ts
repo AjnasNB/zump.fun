@@ -163,7 +163,7 @@ export function useTrading(options: UseTradingOptions): UseTradingReturn {
     if (!account || !address) {
       const tradingError: TradingError = {
         code: 'ACCOUNT_NOT_CONNECTED',
-        message: ERROR_MESSAGES['ACCOUNT_NOT_CONNECTED'],
+        message: ERROR_MESSAGES.ACCOUNT_NOT_CONNECTED,
       };
       setError(tradingError);
       onError?.(tradingError);
@@ -185,7 +185,7 @@ export function useTrading(options: UseTradingOptions): UseTradingReturn {
       if (quoteBalance < cost) {
         const tradingError: TradingError = {
           code: 'INSUFFICIENT_BALANCE',
-          message: `${ERROR_MESSAGES['INSUFFICIENT_BALANCE']} Gerekli: ${cost.toString()}, Mevcut: ${quoteBalance.toString()}`,
+          message: `${ERROR_MESSAGES.INSUFFICIENT_BALANCE} Gerekli: ${cost.toString()}, Mevcut: ${quoteBalance.toString()}`,
         };
         setError(tradingError);
         onError?.(tradingError);
@@ -209,7 +209,7 @@ export function useTrading(options: UseTradingOptions): UseTradingReturn {
         if (approvalResult.status === 'failed') {
           const tradingError: TradingError = {
             code: 'APPROVAL_FAILED',
-            message: ERROR_MESSAGES['APPROVAL_FAILED'],
+            message: ERROR_MESSAGES.APPROVAL_FAILED,
           };
           setError(tradingError);
           onError?.(tradingError);
@@ -252,7 +252,7 @@ export function useTrading(options: UseTradingOptions): UseTradingReturn {
     if (!account || !address) {
       const tradingError: TradingError = {
         code: 'ACCOUNT_NOT_CONNECTED',
-        message: ERROR_MESSAGES['ACCOUNT_NOT_CONNECTED'],
+        message: ERROR_MESSAGES.ACCOUNT_NOT_CONNECTED,
       };
       setError(tradingError);
       onError?.(tradingError);
@@ -271,7 +271,7 @@ export function useTrading(options: UseTradingOptions): UseTradingReturn {
       if (tokenBalance < amount) {
         const tradingError: TradingError = {
           code: 'INSUFFICIENT_BALANCE',
-          message: `${ERROR_MESSAGES['INSUFFICIENT_BALANCE']} Gerekli: ${amount.toString()}, Mevcut: ${tokenBalance.toString()}`,
+          message: `${ERROR_MESSAGES.INSUFFICIENT_BALANCE} Gerekli: ${amount.toString()}, Mevcut: ${tokenBalance.toString()}`,
         };
         setError(tradingError);
         onError?.(tradingError);
@@ -284,7 +284,7 @@ export function useTrading(options: UseTradingOptions): UseTradingReturn {
         if (expectedReturn < minReturn) {
           const tradingError: TradingError = {
             code: 'SLIPPAGE_EXCEEDED',
-            message: ERROR_MESSAGES['SLIPPAGE_EXCEEDED'],
+            message: ERROR_MESSAGES.SLIPPAGE_EXCEEDED,
           };
           setError(tradingError);
           onError?.(tradingError);
@@ -309,7 +309,7 @@ export function useTrading(options: UseTradingOptions): UseTradingReturn {
         if (approvalResult.status === 'failed') {
           const tradingError: TradingError = {
             code: 'APPROVAL_FAILED',
-            message: ERROR_MESSAGES['APPROVAL_FAILED'],
+            message: ERROR_MESSAGES.APPROVAL_FAILED,
           };
           setError(tradingError);
           onError?.(tradingError);

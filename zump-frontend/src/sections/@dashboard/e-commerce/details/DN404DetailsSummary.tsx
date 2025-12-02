@@ -260,7 +260,9 @@ export default function DN404DetailsSummary({
 
   // Calculate cost/return when amount changes
   useEffect(() => {
-    if (!tradingEnabled) return;
+    if (!tradingEnabled) {
+      return undefined;
+    }
     
     const calculateValue = async () => {
       if (!tradeAmount || parseFloat(tradeAmount) <= 0) {
@@ -612,7 +614,11 @@ export default function DN404DetailsSummary({
               onClick={tradingEnabled ? handleSell : undefined}
               startIcon={isSelling && <CircularProgress size={16} color="inherit" />}
             >
-              {isSelling ? 'Selling...' : (isSellDisabled && tradingEnabled ? 'No Balance' : 'Sell')}
+              {(() => {
+                if (isSelling) return 'Selling...';
+                if (isSellDisabled && tradingEnabled) return 'No Balance';
+                return 'Sell';
+              })()}
             </Button>
           </Stack>
         </Stack>

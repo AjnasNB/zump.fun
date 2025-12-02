@@ -18,13 +18,12 @@ import {
   Tab,
   Tabs,
   TextField,
-  Tooltip,
   Typography,
   Alert,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import Iconify from '../iconify';
-import { useTrading, TradingError } from '../../hooks/useTrading';
+import { useTrading } from '../../hooks/useTrading';
 import { formatBigIntWithDecimals, toBigIntWithDecimals } from '../../utils/bondingCurveUtils';
 
 // ===========================================
@@ -414,7 +413,7 @@ export default function TradingPanel({
         <Divider />
 
         {/* Trade Summary */}
-        {amount && parseFloat(amount) > 0 && calculatedValue && (
+        {amount && parseFloat(amount) > 0 && calculatedValue !== null && (
           <Box sx={{ p: 2, bgcolor: 'background.neutral', borderRadius: 1 }}>
             <Stack spacing={1}>
               <Stack direction="row" justifyContent="space-between">
@@ -439,7 +438,7 @@ export default function TradingPanel({
                   }
                 </Typography>
               </Stack>
-              {currentPrice && (
+              {currentPrice !== undefined && currentPrice !== null && (
                 <Stack direction="row" justifyContent="space-between">
                   <Typography variant="body2" color="text.secondary">
                     Current Price

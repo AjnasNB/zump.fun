@@ -4,10 +4,10 @@
  * Requirements: 1.1, 1.3
  */
 
+import type { Abi } from 'starknet';
 import PumpFactoryAbi from './PumpFactory.json';
 import BondingCurvePoolAbi from './BondingCurvePool.json';
 import MemecoinTokenAbi from './MemecoinToken.json';
-import type { Abi } from 'starknet';
 
 // Export ABIs as typed Abi arrays
 export const PUMP_FACTORY_ABI = PumpFactoryAbi as Abi;

@@ -68,19 +68,21 @@ export const parseContractError = (error: unknown): TradingError => {
   const errorLower = errorMessage.toLowerCase();
   
   // Check for known error codes
-  for (const [code, message] of Object.entries(ERROR_MESSAGES)) {
-    if (errorMessage.includes(code) || errorLower.includes(code.toLowerCase())) {
-      return createTradingError(code, message);
-    }
+  const errorEntries = Object.entries(ERROR_MESSAGES);
+  const matchedEntry = errorEntries.find(([code]) => 
+    errorMessage.includes(code) || errorLower.includes(code.toLowerCase())
+  );
+  if (matchedEntry) {
+    return createTradingError(matchedEntry[0], matchedEntry[1]);
   }
   
   // Check for specific error patterns
   if (errorLower.includes('insufficient') && errorLower.includes('balance')) {
-    return createTradingError('INSUFFICIENT_BALANCE', ERROR_MESSAGES['INSUFFICIENT_BALANCE']);
+    return createTradingError('INSUFFICIENT_BALANCE', ERROR_MESSAGES.INSUFFICIENT_BALANCE);
   }
   
   if (errorLower.includes('migrated')) {
-    return createTradingError('ALREADY_MIGRATED', ERROR_MESSAGES['ALREADY_MIGRATED'], [
+    return createTradingError('ALREADY_MIGRATED', ERROR_MESSAGES.ALREADY_MIGRATED, [
       {
         label: 'DEX\'e Git',
         action: () => window.open('https://app.avnu.fi', '_blank'),
@@ -89,23 +91,23 @@ export const parseContractError = (error: unknown): TradingError => {
   }
   
   if (errorLower.includes('rejected') || errorLower.includes('denied')) {
-    return createTradingError('TRANSACTION_REJECTED', ERROR_MESSAGES['TRANSACTION_REJECTED']);
+    return createTradingError('TRANSACTION_REJECTED', ERROR_MESSAGES.TRANSACTION_REJECTED);
   }
   
   if (errorLower.includes('timeout')) {
-    return createTradingError('NETWORK_TIMEOUT', ERROR_MESSAGES['NETWORK_TIMEOUT']);
+    return createTradingError('NETWORK_TIMEOUT', ERROR_MESSAGES.NETWORK_TIMEOUT);
   }
   
   if (errorLower.includes('network') || errorLower.includes('connection')) {
-    return createTradingError('NETWORK_ERROR', ERROR_MESSAGES['NETWORK_ERROR']);
+    return createTradingError('NETWORK_ERROR', ERROR_MESSAGES.NETWORK_ERROR);
   }
   
   if (errorLower.includes('slippage')) {
-    return createTradingError('SLIPPAGE_EXCEEDED', ERROR_MESSAGES['SLIPPAGE_EXCEEDED']);
+    return createTradingError('SLIPPAGE_EXCEEDED', ERROR_MESSAGES.SLIPPAGE_EXCEEDED);
   }
   
   // Default error
-  return createTradingError('UNKNOWN_ERROR', errorMessage || ERROR_MESSAGES['UNKNOWN_ERROR']);
+  return createTradingError('UNKNOWN_ERROR', errorMessage || ERROR_MESSAGES.UNKNOWN_ERROR);
 };
 
 /**

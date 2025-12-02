@@ -1,5 +1,5 @@
 import _mock from '../_mock';
-import { randomNumberRange } from '../utils';
+import { randomNumberRange, randomInArray } from '../utils';
 
 // Default placeholder image for app icons
 const DEFAULT_APP_ICON = '/assets/placeholder.svg';

@@ -101,13 +101,19 @@ export const sortTokens = (
     
     switch (field) {
       case 'price':
-        comparison = a.currentPrice > b.currentPrice ? 1 : a.currentPrice < b.currentPrice ? -1 : 0;
+        if (a.currentPrice > b.currentPrice) comparison = 1;
+        else if (a.currentPrice < b.currentPrice) comparison = -1;
+        else comparison = 0;
         break;
       case 'marketCap':
-        comparison = a.marketCap > b.marketCap ? 1 : a.marketCap < b.marketCap ? -1 : 0;
+        if (a.marketCap > b.marketCap) comparison = 1;
+        else if (a.marketCap < b.marketCap) comparison = -1;
+        else comparison = 0;
         break;
       case 'createdAt':
-        comparison = a.createdAt > b.createdAt ? 1 : a.createdAt < b.createdAt ? -1 : 0;
+        if (a.createdAt > b.createdAt) comparison = 1;
+        else if (a.createdAt < b.createdAt) comparison = -1;
+        else comparison = 0;
         break;
       case 'progress':
         comparison = a.progress - b.progress;

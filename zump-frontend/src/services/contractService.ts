@@ -319,7 +319,8 @@ export class ContractService {
       pool.call('slope'),
     ]);
     
-    const tokensSold = this.parseU256(state.tokens_sold);
+    const stateObj = state as { tokens_sold?: unknown };
+    const tokensSold = this.parseU256(stateObj.tokens_sold);
     const base = this.parseU256(basePrice);
     const s = this.parseU256(slope);
     const amount = BigInt(amountTokens);
@@ -355,7 +356,8 @@ export class ContractService {
       pool.call('slope'),
     ]);
     
-    const tokensSold = this.parseU256(state.tokens_sold);
+    const stateObj2 = state as { tokens_sold?: unknown };
+    const tokensSold = this.parseU256(stateObj2.tokens_sold);
     const base = this.parseU256(basePrice);
     const s = this.parseU256(slope);
     const amount = BigInt(amountTokens);

@@ -9,7 +9,7 @@ import {Notpump_DN404} from 'src/descriptions/DN404';
 import {addToCart,getProduct,gotoStep} from '../../redux/slices/DN404';
 import {useDispatch,useSelector} from '../../redux/store';
 // hooks
-import useTokenDetail from '../../hooks/useTokenDetail';
+import { useTokenDetail } from '../../hooks/useTokenDetail';
 // utils
 import { formatBigIntWithDecimals } from '../../utils/bondingCurveUtils';
 // routes
@@ -308,8 +308,7 @@ export default function DN404DetailsPage() {
                 md: 'repeat(3, 1fr)',
               }}
               sx={{ my: 1 }}
-            >
-            </Box>
+            />
 
             <Card>
               <Tabs
