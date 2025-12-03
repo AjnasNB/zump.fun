@@ -1,38 +1,98 @@
 // @mui
-import { Card, CardProps, Typography, Box, Stack } from '@mui/material';
+import { Card, CardProps, Typography, Box, Stack, CircularProgress } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 // components
 import Chart, { useChart } from '../../../../components/chart';
+// services
+import { getSupabaseService } from '../../../../services/supabaseService';
+import { TradeEvent } from '../../../../@types/supabase';
 
 // ----------------------------------------------------------------------
 
 interface Props extends CardProps {
   height?: number;
   tokenSymbol?: string;
-  priceData?: number[];
+  tokenAddress?: string;
+  poolAddress?: string;
 }
 
-// Generate mock price data for demo
-function generateMockPriceData(points: number = 50): number[] {
+interface PricePoint {
+  timestamp: number;
+  price: number;
+}
+
+// Generate mock price data for demo when no real data exists
+function generateMockPriceData(basePrice: number = 0.0001, points: number = 50): number[] {
   const data: number[] = [];
-  let price = 0.0001; // Starting price
+  let price = basePrice;
   
   for (let i = 0; i < points; i += 1) {
-    // Random walk with slight upward bias
-    const change = (Math.random() - 0.48) * 0.00002;
-    price = Math.max(0.00001, price + change);
+    const change = (Math.random() - 0.48) * basePrice * 0.1;
+    price = Math.max(basePrice * 0.5, price + change);
     data.push(price);
   }
   
   return data;
 }
 
-export default function DN404CandleChart({ height, tokenSymbol = 'TOKEN', priceData }: Props) {
+export default function DN404CandleChart({ 
+  height, 
+  tokenSymbol = 'TOKEN',
+  tokenAddress,
+  poolAddress,
+}: Props) {
   const theme = useTheme();
+  const [priceHistory, setPriceHistory] = useState<PricePoint[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasRealData, setHasRealData] = useState(false);
   
-  // Use provided data or generate mock data
-  const chartData = useMemo(() => priceData || generateMockPriceData(), [priceData]);
+  // Fetch trade history from Supabase
+  useEffect(() => {
+    const fetchTradeHistory = async () => {
+      if (!tokenAddress && !poolAddress) return;
+      
+      setIsLoading(true);
+      try {
+        const supabaseService = getSupabaseService();
+        const trades = await supabaseService.getTradeHistory({
+          poolAddress,
+          limit: 100,
+        });
+        
+        if (trades.length > 0) {
+          // Convert trades to price points
+          const points: PricePoint[] = trades
+            .filter((t: TradeEvent) => t.price && t.created_at)
+            .map((t: TradeEvent) => ({
+              timestamp: new Date(t.created_at!).getTime(),
+              price: Number(t.price) / 1e18, // Convert from wei
+            }))
+            .sort((a: PricePoint, b: PricePoint) => a.timestamp - b.timestamp);
+          
+          setPriceHistory(points);
+          setHasRealData(points.length > 0);
+        } else {
+          setHasRealData(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch trade history:', error);
+        setHasRealData(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTradeHistory();
+  }, [tokenAddress, poolAddress]);
+  
+  // Use real data or generate mock data
+  const chartData = useMemo(() => {
+    if (hasRealData && priceHistory.length > 0) {
+      return priceHistory.map(p => p.price);
+    }
+    return generateMockPriceData();
+  }, [hasRealData, priceHistory]);
   
   // Calculate price change
   const priceChange = useMemo(() => {
@@ -42,6 +102,7 @@ export default function DN404CandleChart({ height, tokenSymbol = 'TOKEN', priceD
     return ((last - first) / first) * 100;
   }, [chartData]);
   
+  const currentPrice = chartData[chartData.length - 1] || 0;
   const isPositive = priceChange >= 0;
   
   const chartOptions = useChart({
@@ -100,7 +161,7 @@ export default function DN404CandleChart({ height, tokenSymbol = 'TOKEN', priceD
     tooltip: {
       enabled: true,
       y: {
-        formatter: (value: number) => `${value.toFixed(8)} ETH`,
+        formatter: (value: number) => `${value.toFixed(8)} STRK`,
         title: {
           formatter: () => 'Price:',
         },
@@ -108,13 +169,21 @@ export default function DN404CandleChart({ height, tokenSymbol = 'TOKEN', priceD
     },
   });
 
+  if (isLoading) {
+    return (
+      <Card sx={{ p: 2, height: height || '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress size={40} />
+      </Card>
+    );
+  }
+
   return (
     <Card sx={{ p: 2, height: height || '100%' }}>
       <Stack spacing={1}>
         {/* Header */}
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="subtitle2">
-            {tokenSymbol} / ETH
+            {tokenSymbol} / STRK
           </Typography>
           <Stack direction="row" alignItems="center" spacing={1}>
             <Typography 
@@ -127,14 +196,14 @@ export default function DN404CandleChart({ height, tokenSymbol = 'TOKEN', priceD
               {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              24h
+              {hasRealData ? '24h' : 'demo'}
             </Typography>
           </Stack>
         </Stack>
         
         {/* Current Price */}
         <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-          {chartData[chartData.length - 1]?.toFixed(8) || '0.00000000'} ETH
+          {currentPrice.toFixed(8)} STRK
         </Typography>
         
         {/* Chart */}
@@ -150,11 +219,13 @@ export default function DN404CandleChart({ height, tokenSymbol = 'TOKEN', priceD
         {/* Footer */}
         <Stack direction="row" justifyContent="space-between">
           <Typography variant="caption" color="text.secondary">
-            Price chart (Demo data)
+            {hasRealData ? `${priceHistory.length} trades` : 'No trades yet (demo data)'}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Real data coming soon
-          </Typography>
+          {!hasRealData && (
+            <Typography variant="caption" sx={{ color: 'warning.main' }}>
+              Be the first to trade!
+            </Typography>
+          )}
         </Stack>
       </Stack>
     </Card>

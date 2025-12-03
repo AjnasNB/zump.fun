@@ -142,7 +142,12 @@ export default function DN404DetailsCarousel({ product }: Props) {
 
   const candleChart = (
     <Card sx={{ p: 1, height: isDesktop ? 600 : 300 }}>
-      <DN404CandleChart />
+      <DN404CandleChart 
+        tokenSymbol={product.symbol}
+        tokenAddress={product.contract}
+        poolAddress={product.poolAddress}
+        height={isDesktop ? 580 : 280}
+      />
     </Card>
   );
   const lineChart = (

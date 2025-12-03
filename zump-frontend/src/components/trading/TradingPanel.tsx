@@ -58,7 +58,7 @@ export default function TradingPanel({
   poolAddress,
   tokenAddress,
   tokenSymbol,
-  quoteSymbol = 'ETH',
+  quoteSymbol = 'STRK',
   currentPrice,
   isMigrated = false,
   onTradeSuccess,

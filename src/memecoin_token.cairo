@@ -62,27 +62,33 @@ mod MemecoinToken {
         self.total_supply.write(0);
     }
 
-    // Views
+    // Views - all marked external for RPC calls
+    #[external(v0)]
     fn name(self: @ContractState) -> felt252 { 
         self.name.read() 
     }
 
+    #[external(v0)]
     fn symbol(self: @ContractState) -> felt252 { 
         self.symbol.read() 
     }
 
+    #[external(v0)]
     fn decimals(self: @ContractState) -> u8 { 
         self.decimals.read() 
     }
 
+    #[external(v0)]
     fn total_supply(self: @ContractState) -> u256 { 
         self.total_supply.read() 
     }
 
+    #[external(v0)]
     fn balance_of(self: @ContractState, owner: ContractAddress) -> u256 {
         self.balances.read(owner)
     }
 
+    #[external(v0)]
     fn allowance(
         self: @ContractState,
         owner: ContractAddress,
@@ -91,6 +97,7 @@ mod MemecoinToken {
         self.allowances.read((owner, spender))
     }
 
+    #[external(v0)]
     fn minter(self: @ContractState) -> ContractAddress {
         self.minter.read()
     }

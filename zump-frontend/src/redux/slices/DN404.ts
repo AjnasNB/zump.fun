@@ -290,6 +290,7 @@ function convertLaunchToProduct(
     symbol: metadata?.symbol || launch.symbol || '???',
     wallet: metadata?.creator_address || '0x0',
     contract: launch.token,
+    poolAddress: launch.pool,
     bondingCurveProccess: progress,
     marketCap: marketCapNumber,
     holdersCount: 0, // Would need separate query

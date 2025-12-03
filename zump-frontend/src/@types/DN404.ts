@@ -43,6 +43,7 @@ export type IDN404MetaData = {
   symbol: string;
   wallet: string; // Stealth wallet address (unlinkable)
   contract?: string;
+  poolAddress?: string; // Bonding curve pool address for trading
   bondingCurveProccess?: number;
   marketCap?: number;
   holdersCount?: number; // Encrypted holder count

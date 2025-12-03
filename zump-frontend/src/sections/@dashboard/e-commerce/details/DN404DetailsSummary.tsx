@@ -300,10 +300,14 @@ export default function DN404DetailsSummary({
     }
   };
 
-  // Handle max button click
+  // Handle max button click - use token balance for sell, quote balance for buy
   const handleMaxClick = () => {
-    if (userQuoteBalance) {
+    if (currentTabTrade === 'trade' && userQuoteBalance) {
+      // Buy tab - show STRK balance
       setTradeAmount(formatBigIntWithDecimals(userQuoteBalance, DECIMALS, 6));
+    } else if (currentTabTrade !== 'trade' && userTokenBalance) {
+      // Sell tab - show token balance
+      setTradeAmount(formatBigIntWithDecimals(userTokenBalance, DECIMALS, 6));
     }
   };
 
@@ -347,6 +351,12 @@ export default function DN404DetailsSummary({
   // Check if sell is disabled (no balance)
   // Requirements: 6.4
   const isSellDisabled = useMemo(() => {
+    console.log('isSellDisabled check:', {
+      isMigrated,
+      tradingEnabled,
+      userTokenBalance: userTokenBalance?.toString(),
+      tradeAmount,
+    });
     if (isMigrated) return true;
     if (!tradingEnabled) return false; // Fall back to mock behavior
     if (userTokenBalance === null || userTokenBalance === BigInt(0)) return true;
@@ -456,11 +466,11 @@ export default function DN404DetailsSummary({
           <Stack spacing={0.5}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography variant="subtitle2">
-                {tokenSymbol} / ETH
+                {tokenSymbol} / STRK
               </Typography>
               {currentPrice !== undefined && currentPrice !== null && (
                 <Typography variant="caption" color="text.secondary">
-                  Price: {formatBigIntWithDecimals(currentPrice, DECIMALS, 8)} ETH
+                  Price: {formatBigIntWithDecimals(currentPrice, DECIMALS, 8)} STRK
                 </Typography>
               )}
             </Stack>
@@ -473,7 +483,7 @@ export default function DN404DetailsSummary({
                 sx={{ textAlign: 'right', color: 'text.secondary', cursor: 'pointer' }}
                 onClick={handleMaxClick}
               >
-                ETH Balance: {tradingEnabled && userQuoteBalance 
+                STRK Balance: {tradingEnabled && userQuoteBalance 
                   ? formatBigIntWithDecimals(userQuoteBalance, DECIMALS, 4) 
                   : '0.00'}
               </Typography>
@@ -524,7 +534,7 @@ export default function DN404DetailsSummary({
                 size="small"
                 type="text"
                 value={calculatedValue ? formatBigIntWithDecimals(calculatedValue, DECIMALS, 6) : ''}
-                label="Cost (ETH)"
+                label="Cost (STRK)"
                 placeholder="0"
                 disabled
                 InputProps={{
@@ -632,7 +642,7 @@ export default function DN404DetailsSummary({
           <Stack spacing={0.5}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography variant="subtitle2">
-                {product.name.split(' ')[0].toUpperCase()} / ETH
+                {product.name.split(' ')[0].toUpperCase()} / STRK
               </Typography>
               <LinearProgress
                 variant="determinate"
@@ -651,14 +661,14 @@ export default function DN404DetailsSummary({
                 component="div"
                 sx={{ textAlign: 'right', color: 'text.secondary', cursor: 'pointer' }}
               >
-                ETH Balance: 1,23
+                STRK Balance: 0.00
               </Typography>
               <RHFTextField
                 size="small"
                 type="number"
                 name={`items[${0}].price`}
                 value={0.001}
-                label="WETH amount"
+                label="STRK amount"
                 placeholder="0"
                 onChange={(event) => {}}
                 InputProps={{

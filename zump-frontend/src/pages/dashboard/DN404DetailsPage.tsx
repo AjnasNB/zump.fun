@@ -67,7 +67,7 @@ export default function DN404DetailsPage() {
 
   // Extract token and pool addresses from URL state or product
   const tokenAddress = (location.state as any)?.tokenAddress || product?.contract;
-  const poolAddress = (location.state as any)?.poolAddress;
+  const poolAddress = (location.state as any)?.poolAddress || product?.poolAddress;
 
   // Fetch on-chain token detail
   // Requirements: 4.1, 4.2, 4.3
@@ -271,13 +271,16 @@ export default function DN404DetailsPage() {
                       </Grid>
                     </Grid>
 
-                    {/* Creator Address - Requirements: 4.5 (stealth address) */}
+                    {/* Token Contract - Requirements: 4.5 (privacy preserved) */}
                     <Box sx={{ mt: 2, p: 2, bgcolor: 'background.neutral', borderRadius: 1 }}>
                       <Typography variant="caption" color="text.secondary">
-                        Creator (Stealth Address)
+                        Token Contract
                       </Typography>
                       <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                        {onChainToken.creatorAddress || '0x0 (Privacy Preserved)'}
+                        {tokenAddress || 'Unknown'}
+                      </Typography>
+                      <Typography variant="caption" color="text.disabled" sx={{ mt: 0.5, display: 'block' }}>
+                        🔒 Creator identity is privacy-preserved
                       </Typography>
                     </Box>
                   </Card>
