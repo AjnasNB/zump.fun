@@ -1,0 +1,288 @@
+﻿[
+    {
+        "type":  "constructor",
+        "name":  "constructor",
+        "inputs":  [
+                       {
+                           "name":  "owner",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ]
+    },
+    {
+        "type":  "struct",
+        "name":  "core::integer::u256",
+        "members":  [
+                        {
+                            "name":  "low",
+                            "type":  "core::integer::u128"
+                        },
+                        {
+                            "name":  "high",
+                            "type":  "core::integer::u128"
+                        }
+                    ]
+    },
+    {
+        "type":  "function",
+        "name":  "insert_commitment",
+        "inputs":  [
+                       {
+                           "name":  "commitment",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "struct",
+        "name":  "core::array::Span::\u003ccore::felt252\u003e",
+        "members":  [
+                        {
+                            "name":  "snapshot",
+                            "type":  "@core::array::Array::\u003ccore::felt252\u003e"
+                        }
+                    ]
+    },
+    {
+        "type":  "function",
+        "name":  "batch_insert_commitments",
+        "inputs":  [
+                       {
+                           "name":  "commitments",
+                           "type":  "core::array::Span::\u003ccore::felt252\u003e"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "enum",
+        "name":  "core::bool",
+        "variants":  [
+                         {
+                             "name":  "False",
+                             "type":  "()"
+                         },
+                         {
+                             "name":  "True",
+                             "type":  "()"
+                         }
+                     ]
+    },
+    {
+        "type":  "function",
+        "name":  "verify_proof",
+        "inputs":  [
+                       {
+                           "name":  "leaf",
+                           "type":  "core::felt252"
+                       },
+                       {
+                           "name":  "leaf_index",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "path",
+                           "type":  "core::array::Span::\u003ccore::felt252\u003e"
+                       },
+                       {
+                           "name":  "root",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::bool"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_proof",
+        "inputs":  [
+                       {
+                           "name":  "leaf_index",
+                           "type":  "core::integer::u256"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::array::Span::\u003ccore::felt252\u003e"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "authorize_inserter",
+        "inputs":  [
+                       {
+                           "name":  "inserter",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "revoke_inserter",
+        "inputs":  [
+                       {
+                           "name":  "inserter",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "get_current_root",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::felt252"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_leaf_count",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_historical_root",
+        "inputs":  [
+                       {
+                           "name":  "root_index",
+                           "type":  "core::integer::u256"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::felt252"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "is_known_root",
+        "inputs":  [
+                       {
+                           "name":  "root",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::bool"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::commitment_tree::CommitmentTree::LeafInserted",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "leaf",
+                            "type":  "core::felt252",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "leaf_index",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "new_root",
+                            "type":  "core::felt252",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::commitment_tree::CommitmentTree::RootUpdated",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "old_root",
+                            "type":  "core::felt252",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "new_root",
+                            "type":  "core::felt252",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "root_index",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::commitment_tree::CommitmentTree::InserterAuthorized",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "inserter",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::commitment_tree::CommitmentTree::Event",
+        "kind":  "enum",
+        "variants":  [
+                         {
+                             "name":  "LeafInserted",
+                             "type":  "pump_fun::commitment_tree::CommitmentTree::LeafInserted",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "RootUpdated",
+                             "type":  "pump_fun::commitment_tree::CommitmentTree::RootUpdated",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "InserterAuthorized",
+                             "type":  "pump_fun::commitment_tree::CommitmentTree::InserterAuthorized",
+                             "kind":  "nested"
+                         }
+                     ]
+    }
+]

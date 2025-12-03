@@ -1,0 +1,650 @@
+﻿[
+    {
+        "type":  "constructor",
+        "name":  "constructor",
+        "inputs":  [
+                       {
+                           "name":  "owner",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "commitment_tree",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "nullifier_registry",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "fee_receiver",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ]
+    },
+    {
+        "type":  "struct",
+        "name":  "core::integer::u256",
+        "members":  [
+                        {
+                            "name":  "low",
+                            "type":  "core::integer::u128"
+                        },
+                        {
+                            "name":  "high",
+                            "type":  "core::integer::u128"
+                        }
+                    ]
+    },
+    {
+        "type":  "function",
+        "name":  "deposit",
+        "inputs":  [
+                       {
+                           "name":  "token",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "amount",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "commitment",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "struct",
+        "name":  "core::array::Span::\u003ccore::felt252\u003e",
+        "members":  [
+                        {
+                            "name":  "snapshot",
+                            "type":  "@core::array::Array::\u003ccore::felt252\u003e"
+                        }
+                    ]
+    },
+    {
+        "type":  "function",
+        "name":  "withdraw",
+        "inputs":  [
+                       {
+                           "name":  "token",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "amount",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "nullifier",
+                           "type":  "core::felt252"
+                       },
+                       {
+                           "name":  "recipient",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "commitment",
+                           "type":  "core::felt252"
+                       },
+                       {
+                           "name":  "leaf_index",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "merkle_proof",
+                           "type":  "core::array::Span::\u003ccore::felt252\u003e"
+                       },
+                       {
+                           "name":  "merkle_root",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "get_fee_amount",
+        "inputs":  [
+                       {
+                           "name":  "amount",
+                           "type":  "core::integer::u256"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_amount_after_fee",
+        "inputs":  [
+                       {
+                           "name":  "amount",
+                           "type":  "core::integer::u256"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "enum",
+        "name":  "core::bool",
+        "variants":  [
+                         {
+                             "name":  "False",
+                             "type":  "()"
+                         },
+                         {
+                             "name":  "True",
+                             "type":  "()"
+                         }
+                     ]
+    },
+    {
+        "type":  "function",
+        "name":  "validate_deposit_amount",
+        "inputs":  [
+                       {
+                           "name":  "amount",
+                           "type":  "core::integer::u256"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::bool"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_min_deposit",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_max_deposit",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "add_supported_token",
+        "inputs":  [
+                       {
+                           "name":  "token",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "remove_supported_token",
+        "inputs":  [
+                       {
+                           "name":  "token",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "set_fee_bps",
+        "inputs":  [
+                       {
+                           "name":  "new_fee_bps",
+                           "type":  "core::integer::u256"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "set_deposit_limits",
+        "inputs":  [
+                       {
+                           "name":  "min_deposit",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "max_deposit",
+                           "type":  "core::integer::u256"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "set_fee_receiver",
+        "inputs":  [
+                       {
+                           "name":  "fee_receiver",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "set_commitment_tree",
+        "inputs":  [
+                       {
+                           "name":  "commitment_tree",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "set_nullifier_registry",
+        "inputs":  [
+                       {
+                           "name":  "nullifier_registry",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "is_token_supported",
+        "inputs":  [
+                       {
+                           "name":  "token",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::bool"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_pool_reserves",
+        "inputs":  [
+                       {
+                           "name":  "token",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_merkle_root",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::felt252"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "is_nullifier_spent",
+        "inputs":  [
+                       {
+                           "name":  "nullifier",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::bool"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_fee_bps",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_fee_receiver",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::starknet::contract_address::ContractAddress"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_commitment_tree",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::starknet::contract_address::ContractAddress"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_nullifier_registry",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::starknet::contract_address::ContractAddress"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_total_deposits",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_total_withdrawals",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_owner",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::starknet::contract_address::ContractAddress"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_commitment_token",
+        "inputs":  [
+                       {
+                           "name":  "commitment",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::starknet::contract_address::ContractAddress"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_commitment_amount",
+        "inputs":  [
+                       {
+                           "name":  "commitment",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::darkpool_mixer::DarkPoolMixer::Deposit",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "commitment",
+                            "type":  "core::felt252",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "token",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "amount",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "leaf_index",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "timestamp",
+                            "type":  "core::integer::u64",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::darkpool_mixer::DarkPoolMixer::Withdrawal",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "nullifier",
+                            "type":  "core::felt252",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "recipient",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "token",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "amount",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "fee",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "timestamp",
+                            "type":  "core::integer::u64",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::darkpool_mixer::DarkPoolMixer::TokenAdded",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "token",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::darkpool_mixer::DarkPoolMixer::TokenRemoved",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "token",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::darkpool_mixer::DarkPoolMixer::FeeUpdated",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "old_fee_bps",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "new_fee_bps",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::darkpool_mixer::DarkPoolMixer::LimitsUpdated",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "min_deposit",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "max_deposit",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::darkpool_mixer::DarkPoolMixer::Event",
+        "kind":  "enum",
+        "variants":  [
+                         {
+                             "name":  "Deposit",
+                             "type":  "pump_fun::darkpool_mixer::DarkPoolMixer::Deposit",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "Withdrawal",
+                             "type":  "pump_fun::darkpool_mixer::DarkPoolMixer::Withdrawal",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "TokenAdded",
+                             "type":  "pump_fun::darkpool_mixer::DarkPoolMixer::TokenAdded",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "TokenRemoved",
+                             "type":  "pump_fun::darkpool_mixer::DarkPoolMixer::TokenRemoved",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "FeeUpdated",
+                             "type":  "pump_fun::darkpool_mixer::DarkPoolMixer::FeeUpdated",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "LimitsUpdated",
+                             "type":  "pump_fun::darkpool_mixer::DarkPoolMixer::LimitsUpdated",
+                             "kind":  "nested"
+                         }
+                     ]
+    }
+]

@@ -15,6 +15,20 @@
 | ProtocolConfig | `0x008c776746428bad63e71142247ddb24963d8ea68de66733ca76f1f50006b34f` | [Voyager](https://sepolia.voyager.online/contract/0x008c776746428bad63e71142247ddb24963d8ea68de66733ca76f1f50006b34f) |
 | PumpFactory | `0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814` | [Voyager](https://sepolia.voyager.online/contract/0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814) |
 
+### Privacy & Infrastructure Contracts
+
+| Contract | Address | Explorer |
+|----------|---------|----------|
+| StealthAddressGenerator | `0x064f0f550c2b7e64d26c21c0952db204eabc92b8f7c00bfe222e4e1081fed92f` | [Voyager](https://sepolia.voyager.online/contract/0x064f0f550c2b7e64d26c21c0952db204eabc92b8f7c00bfe222e4e1081fed92f) |
+| CommitmentTree | `0x026ef549f0fd89855c35802895f3cc4bdd682c1184defc8c30a57f091dc312ec` | [Voyager](https://sepolia.voyager.online/contract/0x026ef549f0fd89855c35802895f3cc4bdd682c1184defc8c30a57f091dc312ec) |
+| NullifierRegistry | `0x042025d0436d3fb24efc2f54bb80b96374834cb738ce0e97f1dc1403f20103f9` | [Voyager](https://sepolia.voyager.online/contract/0x042025d0436d3fb24efc2f54bb80b96374834cb738ce0e97f1dc1403f20103f9) |
+| ZKProofVerifier | `0x058b44f91d29735df077a3c9a2dcf89b3a267e46516a7954687a307781291adf` | [Voyager](https://sepolia.voyager.online/contract/0x058b44f91d29735df077a3c9a2dcf89b3a267e46516a7954687a307781291adf) |
+| DarkPoolMixer | `0x04c0c9b0fcbb2f45b31ccda688fb95af193f8b745713fcedc6763f630b1b25e7` | [Voyager](https://sepolia.voyager.online/contract/0x04c0c9b0fcbb2f45b31ccda688fb95af193f8b745713fcedc6763f630b1b25e7) |
+| PrivacyRelayer | `0x05933b0cc0bd3926730db1a9746f8610a474e820efacd625371a6fb1cfd1c744` | [Voyager](https://sepolia.voyager.online/contract/0x05933b0cc0bd3926730db1a9746f8610a474e820efacd625371a6fb1cfd1c744) |
+| EncryptedStateManager | `0x07067de4049e782c55c9dbd6157e5c97d1224ae76de3fe1912af4e59eed20a44` | [Voyager](https://sepolia.voyager.online/contract/0x07067de4049e782c55c9dbd6157e5c97d1224ae76de3fe1912af4e59eed20a44) |
+| LiquidityMigration | `0x0066136ec75eced3807da383b287877a3ee40b78d3190de47b940e0666729790` | [Voyager](https://sepolia.voyager.online/contract/0x0066136ec75eced3807da383b287877a3ee40b78d3190de47b940e0666729790) |
+| ZkDexHook | `0x047db2d84db630911902930cc6f9286e4e0ae27fe1eb808fcebf2a45d604117b` | [Voyager](https://sepolia.voyager.online/contract/0x047db2d84db630911902930cc6f9286e4e0ae27fe1eb808fcebf2a45d604117b) |
+
 ### Class Hashes (Declared Contracts)
 
 | Contract | Class Hash |
@@ -54,6 +68,15 @@
 | PumpFactory Deploy | `0x04d2f49356441646b086458c1ff08cc5a2748e935dca52bb43d3c0e1368b1b49` |
 | Set Protocol Config | `0x00270adc243f2f17435efc8574f179759d56cad5f8f1fa972a39d90895147a9d` |
 | Set Quote Token | `0x030adcbe99eb23493acd1f176407ed9c7ef3f3afc50022d8a98928549deedd64` |
+| StealthAddressGenerator Deploy | `0x064b60b7f454b30e13dd1e8f2d09475aab312be0ba600dfca4160ce921d72820` |
+| CommitmentTree Deploy | `0x034a315b260b93464779e2da76f581b86005b13be1153de18d56d665ad0f53b1` |
+| NullifierRegistry Deploy | `0x051dc98cb89f9448f2732873e20a4f491b24add2be2f09f0e9752274a0eb38e1` |
+| ZKProofVerifier Deploy | `0x001ca0a5970c44754add4be00dfd533eca70a9e94e325460e782da34e9393f2e` |
+| DarkPoolMixer Deploy | `0x0526685785074518d93cff5162cd840730b98d2d9116966fdeb43431cab6c556` |
+| PrivacyRelayer Deploy | `0x05f8d3754020c975e5db9f1f6c8233abdff0bfca4a89577b6708476243892bd9` |
+| EncryptedStateManager Deploy | `0x062b142e0b017711c9406d2dcd58bf2a7153be699ebb5f00b4fa78504963f4d7` |
+| LiquidityMigration Deploy | `0x023565ea27b729a4e7979fbc373bde20155ad9737cd8ebe10de50a97d1c5513e` |
+| ZkDexHook Deploy | `0x013c00ef99285bc349c502219e8797044d5a6caeb09afd342398ee23d0c52fe0` |
 
 ## Frontend Configuration
 
@@ -144,4 +167,5 @@ starkli call 0x008c776746428bad63e71142247ddb24963d8ea68de66733ca76f1f50006b34f 
 # Check PumpFactory owner  
 starkli call 0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814 owner --rpc https://rpc.starknet-testnet.lava.build
 ```
+
 

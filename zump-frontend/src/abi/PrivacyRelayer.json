@@ -1,0 +1,203 @@
+﻿[
+    {
+        "type":  "constructor",
+        "name":  "constructor",
+        "inputs":  [
+                       {
+                           "name":  "owner",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ]
+    },
+    {
+        "type":  "function",
+        "name":  "authorize_relayer",
+        "inputs":  [
+                       {
+                           "name":  "relayer",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "set_private_role",
+        "inputs":  [
+                       {
+                           "name":  "address",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "role",
+                           "type":  "core::integer::u8"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "struct",
+        "name":  "pump_fun::privacy_relayer::ZKProof",
+        "members":  [
+                        {
+                            "name":  "commitment",
+                            "type":  "core::felt252"
+                        },
+                        {
+                            "name":  "nullifier",
+                            "type":  "core::felt252"
+                        },
+                        {
+                            "name":  "proof_data",
+                            "type":  "core::felt252"
+                        }
+                    ]
+    },
+    {
+        "type":  "struct",
+        "name":  "core::integer::u256",
+        "members":  [
+                        {
+                            "name":  "low",
+                            "type":  "core::integer::u128"
+                        },
+                        {
+                            "name":  "high",
+                            "type":  "core::integer::u128"
+                        }
+                    ]
+    },
+    {
+        "type":  "function",
+        "name":  "execute_private_buy",
+        "inputs":  [
+                       {
+                           "name":  "pool",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "proof",
+                           "type":  "pump_fun::privacy_relayer::ZKProof"
+                       },
+                       {
+                           "name":  "amount_tokens",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "commitment",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "enum",
+        "name":  "core::bool",
+        "variants":  [
+                         {
+                             "name":  "False",
+                             "type":  "()"
+                         },
+                         {
+                             "name":  "True",
+                             "type":  "()"
+                         }
+                     ]
+    },
+    {
+        "type":  "function",
+        "name":  "set_mev_protection",
+        "inputs":  [
+                       {
+                           "name":  "enabled",
+                           "type":  "core::bool"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::privacy_relayer::PrivacyRelayer::PrivateTradeExecuted",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "commitment",
+                            "type":  "core::felt252",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "pool",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "amount",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::privacy_relayer::PrivacyRelayer::RelayerAuthorized",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "relayer",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::privacy_relayer::PrivacyRelayer::PrivateRoleSet",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "address",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "role",
+                            "type":  "core::integer::u8",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::privacy_relayer::PrivacyRelayer::Event",
+        "kind":  "enum",
+        "variants":  [
+                         {
+                             "name":  "PrivateTradeExecuted",
+                             "type":  "pump_fun::privacy_relayer::PrivacyRelayer::PrivateTradeExecuted",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "RelayerAuthorized",
+                             "type":  "pump_fun::privacy_relayer::PrivacyRelayer::RelayerAuthorized",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "PrivateRoleSet",
+                             "type":  "pump_fun::privacy_relayer::PrivacyRelayer::PrivateRoleSet",
+                             "kind":  "nested"
+                         }
+                     ]
+    }
+]

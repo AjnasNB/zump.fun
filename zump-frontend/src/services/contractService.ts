@@ -5,7 +5,16 @@
  */
 
 import { Contract, Account, RpcProvider, CallData, cairo, shortString } from 'starknet';
-import { PUMP_FACTORY_ABI, BONDING_CURVE_POOL_ABI, MEMECOIN_TOKEN_ABI } from '../abi';
+import { 
+  PUMP_FACTORY_ABI, 
+  BONDING_CURVE_POOL_ABI, 
+  MEMECOIN_TOKEN_ABI,
+  STEALTH_ADDRESS_GENERATOR_ABI,
+  NULLIFIER_REGISTRY_ABI,
+  COMMITMENT_TREE_ABI,
+  DARK_POOL_MIXER_ABI,
+  PRIVACY_RELAYER_ABI,
+} from '../abi';
 import { getContractConfig, getContractAddresses, isValidContractAddress, NetworkId } from '../config/contracts';
 
 // ============================================================================
@@ -78,6 +87,16 @@ export class ContractService {
 
   private pumpFactoryContract: Contract | null = null;
 
+  private stealthGeneratorContract: Contract | null = null;
+
+  private nullifierRegistryContract: Contract | null = null;
+
+  private commitmentTreeContract: Contract | null = null;
+
+  private darkPoolMixerContract: Contract | null = null;
+
+  private privacyRelayerContract: Contract | null = null;
+
   constructor(network?: NetworkId) {
     this.network = network || 'sepolia';
     const config = getContractConfig(this.network);
@@ -96,6 +115,11 @@ export class ContractService {
     this.account = account;
     // Reset cached contracts when account changes
     this.pumpFactoryContract = null;
+    this.stealthGeneratorContract = null;
+    this.nullifierRegistryContract = null;
+    this.commitmentTreeContract = null;
+    this.darkPoolMixerContract = null;
+    this.privacyRelayerContract = null;
   }
 
   /**
@@ -168,6 +192,344 @@ export class ContractService {
       tokenAddress,
       this.account || this.provider
     );
+  }
+
+  // =========================================================================
+  // Privacy Contract Instances
+  // =========================================================================
+
+  /**
+   * Get StealthAddressGenerator contract instance
+   */
+  getStealthGeneratorContract(): Contract {
+    const addresses = getContractAddresses(this.network);
+    
+    if (!isValidContractAddress(addresses.stealthAddressGenerator)) {
+      throw new Error('StealthAddressGenerator contract address not configured');
+    }
+
+    if (!this.stealthGeneratorContract) {
+      this.stealthGeneratorContract = new Contract(
+        STEALTH_ADDRESS_GENERATOR_ABI,
+        addresses.stealthAddressGenerator,
+        this.account || this.provider
+      );
+    }
+
+    return this.stealthGeneratorContract;
+  }
+
+  /**
+   * Get NullifierRegistry contract instance
+   */
+  getNullifierRegistryContract(): Contract {
+    const addresses = getContractAddresses(this.network);
+    
+    if (!isValidContractAddress(addresses.nullifierRegistry)) {
+      throw new Error('NullifierRegistry contract address not configured');
+    }
+
+    if (!this.nullifierRegistryContract) {
+      this.nullifierRegistryContract = new Contract(
+        NULLIFIER_REGISTRY_ABI,
+        addresses.nullifierRegistry,
+        this.account || this.provider
+      );
+    }
+
+    return this.nullifierRegistryContract;
+  }
+
+  /**
+   * Get CommitmentTree contract instance
+   */
+  getCommitmentTreeContract(): Contract {
+    const addresses = getContractAddresses(this.network);
+    
+    if (!isValidContractAddress(addresses.commitmentTree)) {
+      throw new Error('CommitmentTree contract address not configured');
+    }
+
+    if (!this.commitmentTreeContract) {
+      this.commitmentTreeContract = new Contract(
+        COMMITMENT_TREE_ABI,
+        addresses.commitmentTree,
+        this.account || this.provider
+      );
+    }
+
+    return this.commitmentTreeContract;
+  }
+
+  /**
+   * Get DarkPoolMixer contract instance
+   */
+  getDarkPoolMixerContract(): Contract {
+    const addresses = getContractAddresses(this.network);
+    
+    if (!isValidContractAddress(addresses.darkPoolMixer)) {
+      throw new Error('DarkPoolMixer contract address not configured');
+    }
+
+    if (!this.darkPoolMixerContract) {
+      this.darkPoolMixerContract = new Contract(
+        DARK_POOL_MIXER_ABI,
+        addresses.darkPoolMixer,
+        this.account || this.provider
+      );
+    }
+
+    return this.darkPoolMixerContract;
+  }
+
+  /**
+   * Get PrivacyRelayer contract instance
+   */
+  getPrivacyRelayerContract(): Contract {
+    const addresses = getContractAddresses(this.network);
+    
+    if (!isValidContractAddress(addresses.privacyRelayer)) {
+      throw new Error('PrivacyRelayer contract address not configured');
+    }
+
+    if (!this.privacyRelayerContract) {
+      this.privacyRelayerContract = new Contract(
+        PRIVACY_RELAYER_ABI,
+        addresses.privacyRelayer,
+        this.account || this.provider
+      );
+    }
+
+    return this.privacyRelayerContract;
+  }
+
+  // =========================================================================
+  // Stealth Address Methods
+  // =========================================================================
+
+  /**
+   * Generate a fresh stealth address via contract
+   */
+  async generateFreshStealthAddress(): Promise<{ address: string; txHash: string }> {
+    if (!this.account) {
+      throw new Error('Account not connected');
+    }
+
+    const stealth = this.getStealthGeneratorContract();
+    const tx = await stealth.invoke('generate_fresh_stealth', []);
+    
+    const receipt = await this.waitForTransaction(tx.transaction_hash);
+    
+    // Extract stealth address from events
+    const stealthAddress = this.extractStealthAddressFromReceipt(receipt);
+    
+    return {
+      address: stealthAddress || '0x0',
+      txHash: tx.transaction_hash,
+    };
+  }
+
+  /**
+   * Generate stealth address with full parameters
+   */
+  async generateStealthAddress(
+    spendingPubkey: string,
+    viewingPubkey: string,
+    ephemeralRandom: string
+  ): Promise<{ address: string; viewTag: string; ephemeralPubkey: string; txHash: string }> {
+    if (!this.account) {
+      throw new Error('Account not connected');
+    }
+
+    const stealth = this.getStealthGeneratorContract();
+    const tx = await stealth.invoke('generate_stealth_address', [
+      spendingPubkey,
+      viewingPubkey,
+      ephemeralRandom,
+    ]);
+    
+    const receipt = await this.waitForTransaction(tx.transaction_hash);
+    
+    // Extract data from events
+    const eventData = this.extractStealthGeneratedEvent(receipt);
+    
+    return {
+      address: eventData?.stealthAddress || '0x0',
+      viewTag: eventData?.viewTag || '0x0',
+      ephemeralPubkey: eventData?.ephemeralPubkey || '0x0',
+      txHash: tx.transaction_hash,
+    };
+  }
+
+  /**
+   * Check if an address is a valid stealth address
+   */
+  async isValidStealthAddress(address: string): Promise<boolean> {
+    const stealth = this.getStealthGeneratorContract();
+    const result = await stealth.call('is_valid_stealth', [address]);
+    return Boolean(result);
+  }
+
+  /**
+   * Get stealth address by view tag
+   */
+  async getStealthByViewTag(viewTag: string): Promise<string> {
+    const stealth = this.getStealthGeneratorContract();
+    const result = await stealth.call('get_stealth_by_view_tag', [viewTag]);
+    return result?.toString() || '0x0';
+  }
+
+  // =========================================================================
+  // Nullifier Registry Methods
+  // =========================================================================
+
+  /**
+   * Check if a nullifier is spent
+   */
+  async isNullifierSpent(nullifier: string): Promise<boolean> {
+    const registry = this.getNullifierRegistryContract();
+    const result = await registry.call('is_spent', [nullifier]);
+    return Boolean(result);
+  }
+
+  /**
+   * Get total spent nullifiers count
+   */
+  async getTotalSpentNullifiers(): Promise<bigint> {
+    const registry = this.getNullifierRegistryContract();
+    const result = await registry.call('get_total_spent');
+    return this.parseU256(result);
+  }
+
+  // =========================================================================
+  // Commitment Tree Methods
+  // =========================================================================
+
+  /**
+   * Get current Merkle root
+   */
+  async getCurrentMerkleRoot(): Promise<string> {
+    const tree = this.getCommitmentTreeContract();
+    const result = await tree.call('get_current_root');
+    return result?.toString() || '0x0';
+  }
+
+  /**
+   * Get total leaf count in tree
+   */
+  async getMerkleTreeLeafCount(): Promise<bigint> {
+    const tree = this.getCommitmentTreeContract();
+    const result = await tree.call('get_leaf_count');
+    return this.parseU256(result);
+  }
+
+  /**
+   * Verify a Merkle proof
+   */
+  async verifyMerkleProof(
+    leaf: string,
+    leafIndex: bigint,
+    proof: string[],
+    root: string
+  ): Promise<boolean> {
+    const tree = this.getCommitmentTreeContract();
+    const result = await tree.call('verify_proof', [
+      leaf,
+      cairo.uint256(leafIndex),
+      proof,
+      root,
+    ]);
+    return Boolean(result);
+  }
+
+  // =========================================================================
+  // DarkPool Mixer Methods
+  // =========================================================================
+
+  /**
+   * Get DarkPool mixer fee (in basis points)
+   */
+  async getMixerFee(): Promise<bigint> {
+    const mixer = this.getDarkPoolMixerContract();
+    const result = await mixer.call('get_fee_bps');
+    return this.parseU256(result);
+  }
+
+  /**
+   * Get amount after fee deduction
+   */
+  async getAmountAfterFee(amount: bigint): Promise<bigint> {
+    const mixer = this.getDarkPoolMixerContract();
+    const result = await mixer.call('get_amount_after_fee', [cairo.uint256(amount)]);
+    return this.parseU256(result);
+  }
+
+  /**
+   * Check if a token is supported by the mixer
+   */
+  async isTokenSupportedByMixer(tokenAddress: string): Promise<boolean> {
+    const mixer = this.getDarkPoolMixerContract();
+    const result = await mixer.call('is_token_supported', [tokenAddress]);
+    return Boolean(result);
+  }
+
+  /**
+   * Get mixer deposit limits
+   */
+  async getMixerLimits(): Promise<{ min: bigint; max: bigint }> {
+    const mixer = this.getDarkPoolMixerContract();
+    const [min, max] = await Promise.all([
+      mixer.call('get_min_deposit'),
+      mixer.call('get_max_deposit'),
+    ]);
+    return {
+      min: this.parseU256(min),
+      max: this.parseU256(max),
+    };
+  }
+
+  // =========================================================================
+  // Helper Methods for Privacy Events
+  // =========================================================================
+
+  /**
+   * Extract stealth address from receipt events
+   */
+  private extractStealthAddressFromReceipt(receipt: any): string | null {
+    try {
+      const events = receipt.events || [];
+      const event = events.find((e: any) => e.keys && e.data);
+      if (event && event.data && event.data[0]) {
+        return event.data[0].toString();
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Extract StealthAddressGenerated event data
+   */
+  private extractStealthGeneratedEvent(receipt: any): {
+    stealthAddress: string;
+    viewTag: string;
+    ephemeralPubkey: string;
+  } | null {
+    try {
+      const events = receipt.events || [];
+      const event = events.find((e: any) => e.keys && e.data);
+      if (event && event.data) {
+        return {
+          stealthAddress: event.data[0]?.toString() || '0x0',
+          viewTag: event.data[1]?.toString() || '0x0',
+          ephemeralPubkey: event.data[2]?.toString() || '0x0',
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
   }
 
   // =========================================================================

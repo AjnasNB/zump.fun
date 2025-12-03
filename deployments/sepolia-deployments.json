@@ -13,6 +13,51 @@
       "address": "0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814",
       "class_hash": "0x05a7fc102bf908e819a427eda583d9aa247e3a3d31fe741998ac18f8085fee98",
       "deploy_tx": "0x04d2f49356441646b086458c1ff08cc5a2748e935dca52bb43d3c0e1368b1b49"
+    },
+    "StealthAddressGenerator": {
+      "address": "0x064f0f550c2b7e64d26c21c0952db204eabc92b8f7c00bfe222e4e1081fed92f",
+      "class_hash": "0x03568871d6930a1800dffb51e9f180d341ac7cc436f951bfb6f1a32abd639bfe",
+      "deploy_tx": "0x064b60b7f454b30e13dd1e8f2d09475aab312be0ba600dfca4160ce921d72820"
+    },
+    "CommitmentTree": {
+      "address": "0x026ef549f0fd89855c35802895f3cc4bdd682c1184defc8c30a57f091dc312ec",
+      "class_hash": "0x04a47bd5c77a538ac436d7b4a2966c1e725786e54e7466a40c81621da90172af",
+      "deploy_tx": "0x034a315b260b93464779e2da76f581b86005b13be1153de18d56d665ad0f53b1"
+    },
+    "NullifierRegistry": {
+      "address": "0x042025d0436d3fb24efc2f54bb80b96374834cb738ce0e97f1dc1403f20103f9",
+      "class_hash": "0x0482c6de7a25d10da3b9925349cc2a5f73fa2445b7b3db4e6fdd87a1fca6ea1e",
+      "deploy_tx": "0x051dc98cb89f9448f2732873e20a4f491b24add2be2f09f0e9752274a0eb38e1"
+    },
+    "ZKProofVerifier": {
+      "address": "0x058b44f91d29735df077a3c9a2dcf89b3a267e46516a7954687a307781291adf",
+      "class_hash": "0x010fa2ba1e52412addfd0fdc5e3b9054498ec124654aa22522c815ee6595fc78",
+      "deploy_tx": "0x001ca0a5970c44754add4be00dfd533eca70a9e94e325460e782da34e9393f2e"
+    },
+    "DarkPoolMixer": {
+      "address": "0x04c0c9b0fcbb2f45b31ccda688fb95af193f8b745713fcedc6763f630b1b25e7",
+      "class_hash": "0x073f391fac86d27049af4f2a7253c9d8277829c44837493dd6444d9d55ac580b",
+      "deploy_tx": "0x0526685785074518d93cff5162cd840730b98d2d9116966fdeb43431cab6c556"
+    },
+    "PrivacyRelayer": {
+      "address": "0x05933b0cc0bd3926730db1a9746f8610a474e820efacd625371a6fb1cfd1c744",
+      "class_hash": "0x07f0ea59304589e6c802f9b69f4820d5e6a8dbef84e184a8460ce2b125fa28dc",
+      "deploy_tx": "0x05f8d3754020c975e5db9f1f6c8233abdff0bfca4a89577b6708476243892bd9"
+    },
+    "EncryptedStateManager": {
+      "address": "0x07067de4049e782c55c9dbd6157e5c97d1224ae76de3fe1912af4e59eed20a44",
+      "class_hash": "0x04be0fd2de378f92618b47d471bcfa5a168efc1ee24cece8fe6eac289ffbe3fe",
+      "deploy_tx": "0x062b142e0b017711c9406d2dcd58bf2a7153be699ebb5f00b4fa78504963f4d7"
+    },
+    "LiquidityMigration": {
+      "address": "0x0066136ec75eced3807da383b287877a3ee40b78d3190de47b940e0666729790",
+      "class_hash": "0x07447cd3a9b559ca301d22104446bbd4af82238de4d8a9a780aacba5f914ef32",
+      "deploy_tx": "0x023565ea27b729a4e7979fbc373bde20155ad9737cd8ebe10de50a97d1c5513e"
+    },
+    "ZkDexHook": {
+      "address": "0x047db2d84db630911902930cc6f9286e4e0ae27fe1eb808fcebf2a45d604117b",
+      "class_hash": "0x02eaf378c05581ed5294168d2c7ec49a0473c82c60a94c0179e84fa0ba8fb165",
+      "deploy_tx": "0x013c00ef99285bc349c502219e8797044d5a6caeb09afd342398ee23d0c52fe0"
     }
   },
   "class_hashes": {
@@ -37,4 +82,5 @@
     "PumpFactory": "https://sepolia.voyager.online/contract/0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814"
   }
 }
+
 

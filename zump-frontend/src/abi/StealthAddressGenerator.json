@@ -1,0 +1,248 @@
+﻿[
+    {
+        "type":  "impl",
+        "name":  "StealthAddressGeneratorImpl",
+        "interface_name":  "pump_fun::stealth_address_generator::IStealthAddressGenerator"
+    },
+    {
+        "type":  "struct",
+        "name":  "pump_fun::stealth_address_generator::StealthAddress",
+        "members":  [
+                        {
+                            "name":  "address",
+                            "type":  "core::starknet::contract_address::ContractAddress"
+                        },
+                        {
+                            "name":  "view_tag",
+                            "type":  "core::felt252"
+                        },
+                        {
+                            "name":  "ephemeral_pubkey",
+                            "type":  "core::felt252"
+                        }
+                    ]
+    },
+    {
+        "type":  "enum",
+        "name":  "core::bool",
+        "variants":  [
+                         {
+                             "name":  "False",
+                             "type":  "()"
+                         },
+                         {
+                             "name":  "True",
+                             "type":  "()"
+                         }
+                     ]
+    },
+    {
+        "type":  "struct",
+        "name":  "core::integer::u256",
+        "members":  [
+                        {
+                            "name":  "low",
+                            "type":  "core::integer::u128"
+                        },
+                        {
+                            "name":  "high",
+                            "type":  "core::integer::u128"
+                        }
+                    ]
+    },
+    {
+        "type":  "interface",
+        "name":  "pump_fun::stealth_address_generator::IStealthAddressGenerator",
+        "items":  [
+                      {
+                          "type":  "function",
+                          "name":  "generate_stealth_address",
+                          "inputs":  [
+                                         {
+                                             "name":  "spending_pubkey",
+                                             "type":  "core::felt252"
+                                         },
+                                         {
+                                             "name":  "viewing_pubkey",
+                                             "type":  "core::felt252"
+                                         },
+                                         {
+                                             "name":  "ephemeral_random",
+                                             "type":  "core::felt252"
+                                         }
+                                     ],
+                          "outputs":  [
+                                          {
+                                              "type":  "pump_fun::stealth_address_generator::StealthAddress"
+                                          }
+                                      ],
+                          "state_mutability":  "external"
+                      },
+                      {
+                          "type":  "function",
+                          "name":  "generate_fresh_stealth",
+                          "inputs":  [
+
+                                     ],
+                          "outputs":  [
+                                          {
+                                              "type":  "core::starknet::contract_address::ContractAddress"
+                                          }
+                                      ],
+                          "state_mutability":  "external"
+                      },
+                      {
+                          "type":  "function",
+                          "name":  "is_valid_stealth",
+                          "inputs":  [
+                                         {
+                                             "name":  "address",
+                                             "type":  "core::starknet::contract_address::ContractAddress"
+                                         }
+                                     ],
+                          "outputs":  [
+                                          {
+                                              "type":  "core::bool"
+                                          }
+                                      ],
+                          "state_mutability":  "view"
+                      },
+                      {
+                          "type":  "function",
+                          "name":  "check_ownership",
+                          "inputs":  [
+                                         {
+                                             "name":  "view_tag",
+                                             "type":  "core::felt252"
+                                         },
+                                         {
+                                             "name":  "viewing_key",
+                                             "type":  "core::felt252"
+                                         }
+                                     ],
+                          "outputs":  [
+                                          {
+                                              "type":  "core::bool"
+                                          }
+                                      ],
+                          "state_mutability":  "view"
+                      },
+                      {
+                          "type":  "function",
+                          "name":  "get_stealth_by_view_tag",
+                          "inputs":  [
+                                         {
+                                             "name":  "view_tag",
+                                             "type":  "core::felt252"
+                                         }
+                                     ],
+                          "outputs":  [
+                                          {
+                                              "type":  "core::starknet::contract_address::ContractAddress"
+                                          }
+                                      ],
+                          "state_mutability":  "view"
+                      },
+                      {
+                          "type":  "function",
+                          "name":  "get_stealth_metadata",
+                          "inputs":  [
+                                         {
+                                             "name":  "primary_wallet",
+                                             "type":  "core::starknet::contract_address::ContractAddress"
+                                         }
+                                     ],
+                          "outputs":  [
+                                          {
+                                              "type":  "core::felt252"
+                                          }
+                                      ],
+                          "state_mutability":  "view"
+                      },
+                      {
+                          "type":  "function",
+                          "name":  "get_nonce",
+                          "inputs":  [
+
+                                     ],
+                          "outputs":  [
+                                          {
+                                              "type":  "core::integer::u256"
+                                          }
+                                      ],
+                          "state_mutability":  "view"
+                      }
+                  ]
+    },
+    {
+        "type":  "constructor",
+        "name":  "constructor",
+        "inputs":  [
+                       {
+                           "name":  "owner",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::stealth_address_generator::StealthAddressGenerator::StealthAddressGenerated",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "primary_wallet",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "stealth_address",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "view_tag",
+                            "type":  "core::felt252",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "ephemeral_pubkey",
+                            "type":  "core::felt252",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::stealth_address_generator::StealthAddressGenerator::StealthAddressRegistered",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "stealth_address",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "view_tag",
+                            "type":  "core::felt252",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::stealth_address_generator::StealthAddressGenerator::Event",
+        "kind":  "enum",
+        "variants":  [
+                         {
+                             "name":  "StealthAddressGenerated",
+                             "type":  "pump_fun::stealth_address_generator::StealthAddressGenerator::StealthAddressGenerated",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "StealthAddressRegistered",
+                             "type":  "pump_fun::stealth_address_generator::StealthAddressGenerator::StealthAddressRegistered",
+                             "kind":  "nested"
+                         }
+                     ]
+    }
+]

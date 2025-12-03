@@ -1,0 +1,99 @@
+﻿[
+    {
+        "type":  "constructor",
+        "name":  "constructor",
+        "inputs":  [
+                       {
+                           "name":  "owner",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "dex_router",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ]
+    },
+    {
+        "type":  "function",
+        "name":  "migrate_with_protection",
+        "inputs":  [
+                       {
+                           "name":  "pool",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "lp_token",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "unlock_liquidity",
+        "inputs":  [
+                       {
+                           "name":  "pool",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::zk_dex_hook::ZkDexHook::LiquidityProtected",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "pool",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "lp_token",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "unlock_time",
+                            "type":  "core::integer::u64",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::zk_dex_hook::ZkDexHook::LPUnlocked",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "pool",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::zk_dex_hook::ZkDexHook::Event",
+        "kind":  "enum",
+        "variants":  [
+                         {
+                             "name":  "LiquidityProtected",
+                             "type":  "pump_fun::zk_dex_hook::ZkDexHook::LiquidityProtected",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "LPUnlocked",
+                             "type":  "pump_fun::zk_dex_hook::ZkDexHook::LPUnlocked",
+                             "kind":  "nested"
+                         }
+                     ]
+    }
+]

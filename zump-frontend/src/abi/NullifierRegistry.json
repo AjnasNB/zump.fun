@@ -1,0 +1,393 @@
+﻿[
+    {
+        "type":  "constructor",
+        "name":  "constructor",
+        "inputs":  [
+                       {
+                           "name":  "owner",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ]
+    },
+    {
+        "type":  "function",
+        "name":  "spend_nullifier",
+        "inputs":  [
+                       {
+                           "name":  "nullifier",
+                           "type":  "core::felt252"
+                       },
+                       {
+                           "name":  "pool",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "struct",
+        "name":  "core::array::Span::\u003ccore::felt252\u003e",
+        "members":  [
+                        {
+                            "name":  "snapshot",
+                            "type":  "@core::array::Array::\u003ccore::felt252\u003e"
+                        }
+                    ]
+    },
+    {
+        "type":  "function",
+        "name":  "batch_spend_nullifiers",
+        "inputs":  [
+                       {
+                           "name":  "nullifiers",
+                           "type":  "core::array::Span::\u003ccore::felt252\u003e"
+                       },
+                       {
+                           "name":  "pool",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "enum",
+        "name":  "core::bool",
+        "variants":  [
+                         {
+                             "name":  "False",
+                             "type":  "()"
+                         },
+                         {
+                             "name":  "True",
+                             "type":  "()"
+                         }
+                     ]
+    },
+    {
+        "type":  "function",
+        "name":  "is_spent",
+        "inputs":  [
+                       {
+                           "name":  "nullifier",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::bool"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "struct",
+        "name":  "core::array::Span::\u003ccore::bool\u003e",
+        "members":  [
+                        {
+                            "name":  "snapshot",
+                            "type":  "@core::array::Array::\u003ccore::bool\u003e"
+                        }
+                    ]
+    },
+    {
+        "type":  "function",
+        "name":  "are_spent",
+        "inputs":  [
+                       {
+                           "name":  "nullifiers",
+                           "type":  "core::array::Span::\u003ccore::felt252\u003e"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::array::Span::\u003ccore::bool\u003e"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "struct",
+        "name":  "pump_fun::nullifier_registry::NullifierEntry",
+        "members":  [
+                        {
+                            "name":  "nullifier",
+                            "type":  "core::felt252"
+                        },
+                        {
+                            "name":  "spent_at",
+                            "type":  "core::integer::u64"
+                        },
+                        {
+                            "name":  "pool",
+                            "type":  "core::starknet::contract_address::ContractAddress"
+                        },
+                        {
+                            "name":  "spent_by",
+                            "type":  "core::starknet::contract_address::ContractAddress"
+                        }
+                    ]
+    },
+    {
+        "type":  "function",
+        "name":  "get_nullifier_entry",
+        "inputs":  [
+                       {
+                           "name":  "nullifier",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "pump_fun::nullifier_registry::NullifierEntry"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "authorize_pool",
+        "inputs":  [
+                       {
+                           "name":  "pool",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "authorize_relayer",
+        "inputs":  [
+                       {
+                           "name":  "relayer",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "revoke_pool",
+        "inputs":  [
+                       {
+                           "name":  "pool",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "revoke_relayer",
+        "inputs":  [
+                       {
+                           "name":  "relayer",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "function",
+        "name":  "is_pool_authorized",
+        "inputs":  [
+                       {
+                           "name":  "pool",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::bool"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "is_relayer_authorized",
+        "inputs":  [
+                       {
+                           "name":  "relayer",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::bool"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "struct",
+        "name":  "core::integer::u256",
+        "members":  [
+                        {
+                            "name":  "low",
+                            "type":  "core::integer::u128"
+                        },
+                        {
+                            "name":  "high",
+                            "type":  "core::integer::u128"
+                        }
+                    ]
+    },
+    {
+        "type":  "function",
+        "name":  "get_total_spent",
+        "inputs":  [
+
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "get_pool_nullifier_count",
+        "inputs":  [
+                       {
+                           "name":  "pool",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::integer::u256"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "function",
+        "name":  "generate_nullifier",
+        "inputs":  [
+                       {
+                           "name":  "secret",
+                           "type":  "core::felt252"
+                       },
+                       {
+                           "name":  "commitment",
+                           "type":  "core::felt252"
+                       }
+                   ],
+        "outputs":  [
+                        {
+                            "type":  "core::felt252"
+                        }
+                    ],
+        "state_mutability":  "view"
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::nullifier_registry::NullifierRegistry::NullifierSpent",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "nullifier",
+                            "type":  "core::felt252",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "pool",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "timestamp",
+                            "type":  "core::integer::u64",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::nullifier_registry::NullifierRegistry::PoolAuthorized",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "pool",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::nullifier_registry::NullifierRegistry::RelayerAuthorized",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "relayer",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::nullifier_registry::NullifierRegistry::DoubleSpendAttempt",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "nullifier",
+                            "type":  "core::felt252",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "attacker",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::nullifier_registry::NullifierRegistry::Event",
+        "kind":  "enum",
+        "variants":  [
+                         {
+                             "name":  "NullifierSpent",
+                             "type":  "pump_fun::nullifier_registry::NullifierRegistry::NullifierSpent",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "PoolAuthorized",
+                             "type":  "pump_fun::nullifier_registry::NullifierRegistry::PoolAuthorized",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "RelayerAuthorized",
+                             "type":  "pump_fun::nullifier_registry::NullifierRegistry::RelayerAuthorized",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "DoubleSpendAttempt",
+                             "type":  "pump_fun::nullifier_registry::NullifierRegistry::DoubleSpendAttempt",
+                             "kind":  "nested"
+                         }
+                     ]
+    }
+]

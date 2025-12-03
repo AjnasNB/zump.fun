@@ -1,0 +1,77 @@
+﻿[
+    {
+        "type":  "constructor",
+        "name":  "constructor",
+        "inputs":  [
+                       {
+                           "name":  "owner",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "factory",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ]
+    },
+    {
+        "type":  "struct",
+        "name":  "core::integer::u256",
+        "members":  [
+                        {
+                            "name":  "low",
+                            "type":  "core::integer::u128"
+                        },
+                        {
+                            "name":  "high",
+                            "type":  "core::integer::u128"
+                        }
+                    ]
+    },
+    {
+        "type":  "function",
+        "name":  "migrate_stub",
+        "inputs":  [
+                       {
+                           "name":  "launch_id",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "pool_addr",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       }
+                   ],
+        "outputs":  [
+
+                    ],
+        "state_mutability":  "external"
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::liquidity_migration::LiquidityMigration::MigrationCompleted",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "launch_id",
+                            "type":  "core::integer::u256",
+                            "kind":  "key"
+                        },
+                        {
+                            "name":  "pool",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "key"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::liquidity_migration::LiquidityMigration::Event",
+        "kind":  "enum",
+        "variants":  [
+                         {
+                             "name":  "MigrationCompleted",
+                             "type":  "pump_fun::liquidity_migration::LiquidityMigration::MigrationCompleted",
+                             "kind":  "nested"
+                         }
+                     ]
+    }
+]
