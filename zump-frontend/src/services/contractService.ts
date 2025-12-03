@@ -578,6 +578,27 @@ export class ContractService {
   }
 
   /**
+   * Check if address is a valid deployed contract (not a mock)
+   */
+  private isValidDeployedAddress(address: string): boolean {
+    if (!address || address === '0x0') return false;
+    
+    // Convert to BigInt to check if it's a mock address (small numbers like 1000-9999)
+    try {
+      const addrBigInt = BigInt(address);
+      // Mock addresses are small numbers, real addresses are much larger
+      // A real Starknet address should be at least 40+ hex chars (160+ bits)
+      if (addrBigInt < BigInt('0x10000000000000000')) {
+        console.warn(`Skipping mock address: ${address}`);
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Get all launches from PumpFactory
    * Requirements: 3.1
    */
@@ -596,7 +617,13 @@ export class ContractService {
       try {
         // eslint-disable-next-line no-await-in-loop
         const launch = await this.getLaunch(i);
-        launches.push(launch);
+        
+        // Filter out mock/invalid addresses
+        if (this.isValidDeployedAddress(launch.token) && this.isValidDeployedAddress(launch.pool)) {
+          launches.push(launch);
+        } else {
+          console.warn(`Skipping launch ${i} with mock addresses: token=${launch.token}, pool=${launch.pool}`);
+        }
       } catch (error) {
         console.error(`Failed to fetch launch ${i}:`, error);
       }
@@ -635,18 +662,9 @@ export class ContractService {
    * Requirements: 4.1
    */
   async getPoolState(poolAddress: string): Promise<PoolState> {
-    // Check if this is a mock address (for PoC)
-    const poolAddressBigInt = BigInt(poolAddress);
-    if (poolAddressBigInt >= BigInt(1000) && poolAddressBigInt < BigInt(10000)) {
-      // This is a mock address, return mock state
-      console.warn(`Mock pool address detected: ${poolAddress}, returning mock state`);
-      return {
-        token: '0x0',
-        quoteToken: '0x0',
-        tokensSold: BigInt(0),
-        reserveBalance: BigInt(0),
-        migrated: false,
-      };
+    // Validate pool address
+    if (!poolAddress || poolAddress === '0x0' || poolAddress === '0') {
+      throw new Error('Invalid pool address');
     }
     
     const pool = this.getBondingCurvePoolContract(poolAddress);
@@ -932,10 +950,17 @@ export class ContractService {
    * Parse PublicLaunchInfo from contract response
    */
   private parsePublicLaunchInfo(result: any): PublicLaunchInfo {
+    // Helper to convert felt252 to hex address
+    const toHexAddress = (value: any): string => {
+      if (!value) return '0x0';
+      const bigIntValue = BigInt(value.toString());
+      return `0x${bigIntValue.toString(16).padStart(64, '0')}`;
+    };
+    
     return {
-      token: result.token?.toString() || '0x0',
-      pool: result.pool?.toString() || '0x0',
-      quoteToken: result.quote_token?.toString() || '0x0',
+      token: toHexAddress(result.token),
+      pool: toHexAddress(result.pool),
+      quoteToken: toHexAddress(result.quote_token),
       name: shortString.decodeShortString(result.name?.toString() || '0x0'),
       symbol: shortString.decodeShortString(result.symbol?.toString() || '0x0'),
       basePrice: this.parseU256(result.base_price),
@@ -995,8 +1020,8 @@ export class ContractService {
         const poolFelt = BigInt(launchEvent.data[1]?.toString() || '0');
         
         // Convert felt252 to hex address format
-        const token = '0x' + tokenFelt.toString(16).padStart(64, '0');
-        const pool = '0x' + poolFelt.toString(16).padStart(64, '0');
+        const token = `0x${tokenFelt.toString(16).padStart(64, '0')}`;
+        const pool = `0x${poolFelt.toString(16).padStart(64, '0')}`;
         
         const result = {
           launchId,

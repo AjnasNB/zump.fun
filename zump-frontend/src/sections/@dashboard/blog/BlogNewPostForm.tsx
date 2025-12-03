@@ -16,6 +16,14 @@ import {
   Box,
   Divider,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Stepper,
+  Step,
+  StepLabel,
+  StepContent,
+  LinearProgress,
 } from '@mui/material';
 // routes
 import { PATH_DASHBOARD } from '../../../routes/paths';
@@ -95,8 +103,28 @@ export default function BlogNewPostForm() {
     gasEstimate,
     transactionHash,
     tokenAddress,
+    deploymentStep,
     reset: resetLaunch,
   } = useTokenLaunch();
+
+  // Deployment steps configuration
+  const DEPLOYMENT_STEPS = [
+    { key: 'preparing', label: 'Preparing Launch', description: 'Validating parameters...' },
+    { key: 'uploading_image', label: 'Uploading Image', description: 'Uploading token image to storage...' },
+    { key: 'deploying_token', label: 'Deploy Token Contract', description: 'Sign transaction to deploy MemecoinToken (1/4)' },
+    { key: 'deploying_pool', label: 'Deploy Pool Contract', description: 'Sign transaction to deploy BondingCurvePool (2/4)' },
+    { key: 'updating_minter', label: 'Update Token Minter', description: 'Sign transaction to set pool as minter (3/4)' },
+    { key: 'registering', label: 'Register Launch', description: 'Sign transaction to register with PumpFactory (4/4)' },
+    { key: 'saving_metadata', label: 'Saving Metadata', description: 'Saving token metadata to database...' },
+    { key: 'complete', label: 'Complete!', description: 'Your token has been launched successfully!' },
+  ];
+
+  // Get current step index
+  const getCurrentStepIndex = () => {
+    if (!deploymentStep) return -1;
+    const index = DEPLOYMENT_STEPS.findIndex(s => s.key === deploymentStep);
+    return index >= 0 ? index : -1;
+  };
 
   const [openPreview, setOpenPreview] = useState(false);
   const [showGasEstimate, setShowGasEstimate] = useState(false);
@@ -514,6 +542,122 @@ export default function BlogNewPostForm() {
         onClose={handleClosePreview}
         onSubmit={handleSubmit(onSubmit)}
       />
+
+      {/* Deployment Progress Dialog */}
+      <Dialog 
+        open={isLaunching} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }
+        }}
+      >
+        <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            🚀 Launching Your Token
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Please sign each transaction in your wallet
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            <Stepper activeStep={getCurrentStepIndex()} orientation="vertical">
+              {DEPLOYMENT_STEPS.map((step, index) => {
+                const isActive = getCurrentStepIndex() === index;
+                const isCompleted = getCurrentStepIndex() > index;
+                const isFailed = deploymentStep === 'failed';
+                
+                return (
+                  <Step key={step.key} completed={isCompleted}>
+                    <StepLabel
+                      error={isFailed && isActive}
+                      StepIconProps={{
+                        sx: {
+                          '&.Mui-active': { color: '#00d9ff' },
+                          '&.Mui-completed': { color: '#00ff88' },
+                        }
+                      }}
+                    >
+                      <Typography 
+                        variant="subtitle1" 
+                        sx={{ 
+                          fontWeight: isActive ? 700 : 400,
+                          color: isActive ? '#00d9ff' : isCompleted ? '#00ff88' : 'text.secondary'
+                        }}
+                      >
+                        {step.label}
+                      </Typography>
+                    </StepLabel>
+                    <StepContent>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        {step.description}
+                      </Typography>
+                      {isActive && !isFailed && (
+                        <LinearProgress 
+                          sx={{ 
+                            mt: 1,
+                            height: 4,
+                            borderRadius: 2,
+                            backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                            '& .MuiLinearProgress-bar': {
+                              background: 'linear-gradient(90deg, #00d9ff, #00ff88)',
+                            }
+                          }} 
+                        />
+                      )}
+                    </StepContent>
+                  </Step>
+                );
+              })}
+            </Stepper>
+
+            {/* Progress Summary */}
+            <Box sx={{ mt: 3, p: 2, bgcolor: 'rgba(0, 217, 255, 0.05)', borderRadius: 2 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Typography variant="body2" color="text.secondary">
+                  Progress
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#00d9ff' }}>
+                  {Math.max(0, getCurrentStepIndex() + 1)} / {DEPLOYMENT_STEPS.length} steps
+                </Typography>
+              </Stack>
+              <LinearProgress 
+                variant="determinate" 
+                value={(Math.max(0, getCurrentStepIndex() + 1) / DEPLOYMENT_STEPS.length) * 100}
+                sx={{ 
+                  mt: 1,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                  '& .MuiLinearProgress-bar': {
+                    background: 'linear-gradient(90deg, #00d9ff, #00ff88)',
+                    borderRadius: 4,
+                  }
+                }} 
+              />
+            </Box>
+
+            {/* Warning Message */}
+            <Alert 
+              severity="warning" 
+              sx={{ 
+                mt: 2,
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                border: '1px solid rgba(255, 193, 7, 0.3)',
+              }}
+            >
+              <Typography variant="body2">
+                <strong>Do not close this window!</strong> Each step requires a wallet signature.
+                You will need to sign <strong>4 transactions</strong> in total.
+              </Typography>
+            </Alert>
+          </Box>
+        </DialogContent>
+      </Dialog>
     </FormProvider>
   );
 }

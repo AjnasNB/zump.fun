@@ -4,9 +4,9 @@
  * Deploys MemecoinToken and BondingCurvePool, then registers with PumpFactory
  */
 
-import { Account, Contract, CallData, hash, stark, RpcProvider } from 'starknet';
+import { Account, Contract, CallData, shortString, RpcProvider, cairo } from 'starknet';
 import { getContractConfig, getContractAddresses } from '../config/contracts';
-import { PUMP_FACTORY_ABI } from '../abi';
+import { PUMP_FACTORY_ABI, MEMECOIN_TOKEN_ABI } from '../abi';
 
 // Class hashes from deployment (these are declared on Sepolia)
 const CLASS_HASHES = {
@@ -17,17 +17,18 @@ const CLASS_HASHES = {
 export interface DeployTokenParams {
   name: string;
   symbol: string;
-  maxSupply: bigint;
-  owner: string;
+  decimals?: number;  // Default 18
+  initialMinter: string;  // Pool will be the minter
 }
 
 export interface DeployPoolParams {
   tokenAddress: string;
   quoteTokenAddress: string;
+  creator: string;
+  protocolConfig: string;
   basePrice: bigint;
   slope: bigint;
   maxSupply: bigint;
-  owner: string;
 }
 
 export interface LaunchDeploymentResult {
@@ -39,6 +40,46 @@ export interface LaunchDeploymentResult {
   registerTx: string;
 }
 
+// Universal Deployer Contract address on Starknet
+const UDC_ADDRESS = '0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf';
+
+/**
+ * Extract deployed contract address from transaction receipt
+ */
+function extractDeployedAddress(receipt: any): string | null {
+  console.log('Parsing deployment receipt:', JSON.stringify(receipt, null, 2));
+  
+  // Method 1: Check events array
+  const events = receipt.events || [];
+  for (const event of events) {
+    // UDC ContractDeployed event has deployed address in keys[1] or data[0]
+    const fromAddr = event.from_address?.toLowerCase?.() || '';
+    if (fromAddr.includes('41a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf')) {
+      console.log('Found UDC event:', event);
+      // Try keys first (address is usually keys[1])
+      if (event.keys && event.keys.length > 1) {
+        return event.keys[1];
+      }
+      // Then try data
+      if (event.data && event.data.length > 0) {
+        return event.data[0];
+      }
+    }
+  }
+  
+  // Method 2: Check contract_address in receipt directly
+  if (receipt.contract_address) {
+    return receipt.contract_address;
+  }
+  
+  // Method 3: Check deploy_transaction_receipts
+  if (receipt.deploy_transaction_receipts?.[0]?.contract_address) {
+    return receipt.deploy_transaction_receipts[0].contract_address;
+  }
+  
+  return null;
+}
+
 /**
  * Deploy a new MemecoinToken contract
  */
@@ -46,37 +87,48 @@ export async function deployMemecoinToken(
   account: Account,
   params: DeployTokenParams
 ): Promise<{ address: string; transactionHash: string }> {
-  const { name, symbol, maxSupply, owner } = params;
-  
-  // Unique salt for deployment
-  const salt = stark.randomAddress();
+  const { name, symbol, decimals = 18, initialMinter } = params;
   
   // Constructor calldata for MemecoinToken
-  // constructor(name: felt252, symbol: felt252, max_supply: u256, owner: ContractAddress)
-  const constructorCalldata = CallData.compile({
-    name: stark.encodeShortString(name.slice(0, 31)),
-    symbol: stark.encodeShortString(symbol.slice(0, 31)),
-    max_supply: { low: maxSupply & BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'), high: maxSupply >> BigInt(128) },
-    owner,
-  });
+  const constructorCalldata = [
+    shortString.encodeShortString(name.slice(0, 31)),
+    shortString.encodeShortString(symbol.slice(0, 31)),
+    decimals.toString(),
+    initialMinter,
+  ];
   
-  // Calculate future contract address
-  const contractAddress = hash.calculateContractAddressFromHash(
-    salt,
-    CLASS_HASHES.MemecoinToken,
-    constructorCalldata,
-    0
-  );
+  // Generate unique salt
+  const salt = `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
   
-  // Deploy the contract
-  const { transaction_hash } = await account.deployContract({
-    classHash: CLASS_HASHES.MemecoinToken,
-    constructorCalldata,
-    salt,
-  });
+  // Deploy via UDC
+  const deployCall = {
+    contractAddress: UDC_ADDRESS,
+    entrypoint: 'deployContract',
+    calldata: CallData.compile({
+      classHash: CLASS_HASHES.MemecoinToken,
+      salt,
+      unique: 1,
+      calldata: constructorCalldata,
+    }),
+  };
+  
+  console.log('Deploying MemecoinToken with call:', deployCall);
+  
+  const { transaction_hash } = await account.execute(deployCall);
+  console.log('Token deploy tx hash:', transaction_hash);
   
   // Wait for transaction
-  await account.waitForTransaction(transaction_hash);
+  const receipt = await account.waitForTransaction(transaction_hash);
+  
+  // Extract contract address
+  const contractAddress = extractDeployedAddress(receipt);
+  
+  if (!contractAddress) {
+    console.error('Receipt without contract address:', receipt);
+    throw new Error(`Failed to get contract address. Check console for receipt details. TX: ${transaction_hash}`);
+  }
+  
+  console.log('Token deployed at:', contractAddress);
   
   return {
     address: contractAddress,
@@ -91,39 +143,58 @@ export async function deployBondingCurvePool(
   account: Account,
   params: DeployPoolParams
 ): Promise<{ address: string; transactionHash: string }> {
-  const { tokenAddress, quoteTokenAddress, basePrice, slope, maxSupply, owner } = params;
-  
-  // Unique salt for deployment
-  const salt = stark.randomAddress();
+  const { tokenAddress, quoteTokenAddress, creator, protocolConfig, basePrice, slope, maxSupply } = params;
   
   // Constructor calldata for BondingCurvePool
-  // constructor(token: ContractAddress, quote_token: ContractAddress, base_price: u256, slope: u256, max_supply: u256, owner: ContractAddress)
-  const constructorCalldata = CallData.compile({
-    token: tokenAddress,
-    quote_token: quoteTokenAddress,
-    base_price: { low: basePrice & BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'), high: basePrice >> BigInt(128) },
-    slope: { low: slope & BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'), high: slope >> BigInt(128) },
-    max_supply: { low: maxSupply & BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'), high: maxSupply >> BigInt(128) },
-    owner,
-  });
+  const uint256BasePrice = cairo.uint256(basePrice);
+  const uint256Slope = cairo.uint256(slope);
+  const uint256MaxSupply = cairo.uint256(maxSupply);
   
-  // Calculate future contract address
-  const contractAddress = hash.calculateContractAddressFromHash(
-    salt,
-    CLASS_HASHES.BondingCurvePool,
-    constructorCalldata,
-    0
-  );
+  const constructorCalldata = [
+    tokenAddress,
+    quoteTokenAddress,
+    creator,
+    protocolConfig,
+    uint256BasePrice.low.toString(),
+    uint256BasePrice.high.toString(),
+    uint256Slope.low.toString(),
+    uint256Slope.high.toString(),
+    uint256MaxSupply.low.toString(),
+    uint256MaxSupply.high.toString(),
+  ];
   
-  // Deploy the contract
-  const { transaction_hash } = await account.deployContract({
-    classHash: CLASS_HASHES.BondingCurvePool,
-    constructorCalldata,
-    salt,
-  });
+  // Generate unique salt
+  const salt = `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
+  
+  // Deploy via UDC
+  const deployCall = {
+    contractAddress: UDC_ADDRESS,
+    entrypoint: 'deployContract',
+    calldata: CallData.compile({
+      classHash: CLASS_HASHES.BondingCurvePool,
+      salt,
+      unique: 1,
+      calldata: constructorCalldata,
+    }),
+  };
+  
+  console.log('Deploying BondingCurvePool with call:', deployCall);
+  
+  const { transaction_hash } = await account.execute(deployCall);
+  console.log('Pool deploy tx hash:', transaction_hash);
   
   // Wait for transaction
-  await account.waitForTransaction(transaction_hash);
+  const receipt = await account.waitForTransaction(transaction_hash);
+  
+  // Extract contract address
+  const contractAddress = extractDeployedAddress(receipt);
+  
+  if (!contractAddress) {
+    console.error('Pool receipt without contract address:', receipt);
+    throw new Error(`Failed to get pool contract address. TX: ${transaction_hash}`);
+  }
+  
+  console.log('Pool deployed at:', contractAddress);
   
   return {
     address: contractAddress,
@@ -163,13 +234,13 @@ export async function registerLaunchWithFactory(
     params.tokenAddress,
     params.poolAddress,
     params.quoteTokenAddress,
-    stark.encodeShortString(params.name.slice(0, 31)),
-    stark.encodeShortString(params.symbol.slice(0, 31)),
-    { low: params.basePrice & BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'), high: params.basePrice >> BigInt(128) },
-    { low: params.slope & BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'), high: params.slope >> BigInt(128) },
-    { low: params.maxSupply & BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'), high: params.maxSupply >> BigInt(128) },
+    shortString.encodeShortString(params.name.slice(0, 31)),
+    shortString.encodeShortString(params.symbol.slice(0, 31)),
+    cairo.uint256(params.basePrice),
+    cairo.uint256(params.slope),
+    cairo.uint256(params.maxSupply),
     params.stealthCreator,
-    { low: params.migrationThreshold & BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'), high: params.migrationThreshold >> BigInt(128) },
+    cairo.uint256(params.migrationThreshold),
   ]);
   
   // Wait for transaction and get receipt
@@ -189,7 +260,27 @@ export async function registerLaunchWithFactory(
 }
 
 /**
- * Full launch deployment: Deploy token, pool, and register with factory
+ * Update token minter to pool address
+ */
+async function updateTokenMinter(
+  account: Account,
+  tokenAddress: string,
+  newMinter: string
+): Promise<string> {
+  const tokenContract = new Contract(
+    MEMECOIN_TOKEN_ABI,
+    tokenAddress,
+    account
+  );
+  
+  const { transaction_hash } = await tokenContract.invoke('update_minter', [newMinter]);
+  await account.waitForTransaction(transaction_hash);
+  
+  return transaction_hash;
+}
+
+/**
+ * Full launch deployment: Deploy token, pool, update minter, and register with factory
  */
 export async function deployFullLaunch(
   account: Account,
@@ -210,12 +301,12 @@ export async function deployFullLaunch(
   
   onProgress?.('deploying_token', 'Deploying MemecoinToken contract...');
   
-  // Step 1: Deploy Token
+  // Step 1: Deploy Token (minter = owner initially)
   const tokenResult = await deployMemecoinToken(account, {
     name: params.name,
     symbol: params.symbol,
-    maxSupply: params.maxSupply,
-    owner: ownerAddress,
+    decimals: 18,
+    initialMinter: ownerAddress, // Will be updated to pool after pool deployment
   });
   
   onProgress?.('deploying_pool', `Token deployed at ${tokenResult.address}. Deploying BondingCurvePool...`);
@@ -224,15 +315,21 @@ export async function deployFullLaunch(
   const poolResult = await deployBondingCurvePool(account, {
     tokenAddress: tokenResult.address,
     quoteTokenAddress: addresses.quoteToken,
+    creator: stealthCreator,
+    protocolConfig: addresses.protocolConfig,
     basePrice: params.basePrice,
     slope: params.slope,
     maxSupply: params.maxSupply,
-    owner: ownerAddress,
   });
   
-  onProgress?.('registering', `Pool deployed at ${poolResult.address}. Registering with PumpFactory...`);
+  onProgress?.('updating_minter', `Pool deployed at ${poolResult.address}. Updating token minter...`);
   
-  // Step 3: Register with Factory
+  // Step 3: Update token minter to pool
+  await updateTokenMinter(account, tokenResult.address, poolResult.address);
+  
+  onProgress?.('registering', 'Registering with PumpFactory...');
+  
+  // Step 4: Register with Factory
   const registerResult = await registerLaunchWithFactory(account, {
     tokenAddress: tokenResult.address,
     poolAddress: poolResult.address,
@@ -265,4 +362,5 @@ export default {
   deployFullLaunch,
   CLASS_HASHES,
 };
+
 

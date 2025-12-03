@@ -19,6 +19,34 @@ import {
 } from '../@types/supabase';
 
 // ===========================================
+// Helper Functions
+// ===========================================
+
+/**
+ * Normalize Starknet address to consistent format
+ * - Lowercase
+ * - 0x prefix
+ * - Remove leading zeros after 0x, then add them back to make 64 chars
+ */
+function normalizeAddress(address: string): string {
+  if (!address) return '0x0';
+  
+  // Remove 0x prefix and convert to lowercase
+  let hex = address.toLowerCase().replace(/^0x/, '');
+  
+  // Remove leading zeros
+  hex = hex.replace(/^0+/, '');
+  
+  // If empty, return zero address
+  if (!hex) return '0x0';
+  
+  // Pad to 64 characters
+  hex = hex.padStart(64, '0');
+  
+  return `0x${hex}`;
+}
+
+// ===========================================
 // Error Types
 // ===========================================
 
@@ -67,9 +95,17 @@ export class SupabaseService {
   async createTokenMetadata(metadata: TokenMetadataInsert): Promise<TokenMetadata> {
     const client = this.getClient();
 
+    // Normalize addresses before saving
+    const normalizedMetadata = {
+      ...metadata,
+      token_address: normalizeAddress(metadata.token_address),
+      pool_address: metadata.pool_address ? normalizeAddress(metadata.pool_address) : null,
+      creator_address: metadata.creator_address ? normalizeAddress(metadata.creator_address) : null,
+    };
+
     const { data, error } = await client
       .from(SUPABASE_CONFIG.tables.tokenMetadata)
-      .insert(metadata)
+      .insert(normalizedMetadata)
       .select()
       .single();
 
@@ -90,18 +126,14 @@ export class SupabaseService {
    */
   async getTokenMetadata(tokenAddress: string): Promise<TokenMetadata | null> {
     const client = this.getClient();
+    const normalizedInputAddress = normalizeAddress(tokenAddress);
 
+    // Fetch all and filter by normalized address
     const { data, error } = await client
       .from(SUPABASE_CONFIG.tables.tokenMetadata)
-      .select('*')
-      .eq('token_address', tokenAddress)
-      .single();
+      .select('*');
 
     if (error) {
-      // PGRST116 = Row not found - return null gracefully
-      if (error.code === 'PGRST116') {
-        return null;
-      }
       throw new SupabaseServiceError(
         `Failed to fetch token metadata: ${error.message}`,
         'FETCH_FAILED',
@@ -109,7 +141,16 @@ export class SupabaseService {
       );
     }
 
-    return data as TokenMetadata;
+    // Find matching metadata by normalized address
+    const match = (data || []).find((item: TokenMetadata) => 
+      normalizeAddress(item.token_address) === normalizedInputAddress
+    );
+
+    if (!match) {
+      return null;
+    }
+
+    return match as TokenMetadata;
   }
 
   /**
@@ -189,11 +230,14 @@ export class SupabaseService {
     }
 
     const client = this.getClient();
-
+    
+    // Normalize all input addresses
+    const normalizedAddresses = tokenAddresses.map(normalizeAddress);
+    
+    // Fetch all metadata from Supabase
     const { data, error } = await client
       .from(SUPABASE_CONFIG.tables.tokenMetadata)
-      .select('*')
-      .in('token_address', tokenAddresses);
+      .select('*');
 
     if (error) {
       throw new SupabaseServiceError(
@@ -203,7 +247,13 @@ export class SupabaseService {
       );
     }
 
-    return (data || []) as TokenMetadata[];
+    // Filter by normalized addresses (case-insensitive match)
+    const result = (data || []).filter((item: TokenMetadata) => {
+      const normalizedDbAddress = normalizeAddress(item.token_address);
+      return normalizedAddresses.includes(normalizedDbAddress);
+    });
+
+    return result as TokenMetadata[];
   }
 
   // ===========================================

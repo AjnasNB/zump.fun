@@ -51,6 +51,7 @@ export interface LaunchState {
   poolAddress: string | null;
   launchId: bigint | null;
   gasEstimate: GasEstimate | null;
+  deploymentStep: string | null;  // Current deployment step
 }
 
 export interface UseTokenLaunchReturn extends LaunchState {
@@ -110,6 +111,7 @@ export function useTokenLaunch(): UseTokenLaunchReturn {
     poolAddress: null,
     launchId: null,
     gasEstimate: null,
+    deploymentStep: null,
   });
 
   /**
@@ -125,6 +127,7 @@ export function useTokenLaunch(): UseTokenLaunchReturn {
       poolAddress: null,
       launchId: null,
       gasEstimate: null,
+      deploymentStep: null,
     });
   }, []);
 
@@ -214,7 +217,8 @@ export function useTokenLaunch(): UseTokenLaunchReturn {
   }, [account, address, buildCalldata]);
 
   /**
-   * Launch a new token
+   * Launch a new token with REAL contract deployment
+   * Deploys MemecoinToken, BondingCurvePool, and registers with PumpFactory
    * Requirements: 2.1, 2.2, 2.3
    */
   const launch = useCallback(async (params: LaunchFormData): Promise<LaunchResult> => {
@@ -230,23 +234,25 @@ export function useTokenLaunch(): UseTokenLaunchReturn {
       tokenAddress: null,
       poolAddress: null,
       launchId: null,
+      deploymentStep: 'preparing',
     }));
 
     try {
-      console.log('Starting token launch with params:', params);
+      console.log('Starting REAL token deployment with params:', params);
       
-      // Get contract service and set account
-      const contractService = getContractService();
-      contractService.setAccount(account as unknown as Account);
-
-      // Build launch parameters
-      const { launchParams } = buildCalldata(params, address);
-      console.log('Built launch parameters:', launchParams);
+      // Parse amounts
+      const basePrice = parseAmount(params.basePrice);
+      const slope = parseAmount(params.slope);
+      const maxSupply = parseAmount(params.maxSupply);
+      const migrationThreshold = params.migrationThreshold 
+        ? parseAmount(params.migrationThreshold)
+        : DEFAULT_MIGRATION_THRESHOLD;
 
       // Upload image if provided
       let imageUrl = params.imageUrl || '';
       if (params.imageFile) {
         try {
+          setState(prev => ({ ...prev, deploymentStep: 'uploading_image' }));
           console.log('Uploading token image...');
           const supabaseService = getSupabaseService();
           imageUrl = await supabaseService.uploadTokenImage(params.imageFile);
@@ -257,28 +263,56 @@ export function useTokenLaunch(): UseTokenLaunchReturn {
         }
       }
 
-      // Execute launch transaction
-      console.log('Executing launch transaction...');
-      const result = await contractService.createLaunch(launchParams);
-      console.log('Launch transaction result:', result);
+      // Progress callback
+      const onProgress = (step: string, details?: string) => {
+        console.log(`[Deployment] ${step}: ${details || ''}`);
+        setState(prev => ({ ...prev, deploymentStep: step }));
+      };
 
-      // Update state with transaction result
+      // Deploy real contracts (Token + Pool + Register)
+      console.log('Starting full contract deployment...');
+      const deploymentResult = await deployFullLaunch(
+        account as unknown as Account,
+        {
+          name: params.name,
+          symbol: params.symbol,
+          basePrice,
+          slope,
+          maxSupply,
+          migrationThreshold,
+          stealthCreator: address, // Use wallet address as creator (or stealth address)
+        },
+        onProgress
+      );
+
+      console.log('Deployment result:', deploymentResult);
+
+      // Convert to LaunchResult format
+      const result: LaunchResult = {
+        transactionHash: deploymentResult.registerTx,
+        tokenAddress: deploymentResult.tokenAddress,
+        poolAddress: deploymentResult.poolAddress,
+        launchId: deploymentResult.launchId,
+      };
+
+      // Update state with deployment result
       setState(prev => ({
         ...prev,
         transactionHash: result.transactionHash,
         tokenAddress: result.tokenAddress,
         poolAddress: result.poolAddress,
         launchId: result.launchId,
+        deploymentStep: 'saving_metadata',
       }));
 
-      // Store metadata in Supabase after successful launch
+      // Store metadata in Supabase
       if (result.tokenAddress && result.tokenAddress !== '0x0' && result.tokenAddress !== '0') {
         try {
           const supabaseService = getSupabaseService();
           const metadata: TokenMetadataInsert = {
             token_address: result.tokenAddress,
             pool_address: result.poolAddress,
-            launch_id: result.launchId.toString(),  // Convert bigint to string
+            launch_id: result.launchId.toString(),
             name: params.name,
             symbol: params.symbol,
             description: params.description || null,
@@ -291,26 +325,23 @@ export function useTokenLaunch(): UseTokenLaunchReturn {
           };
           
           console.log('Saving metadata to Supabase:', metadata);
-          const savedMetadata = await supabaseService.createTokenMetadata(metadata);
-          console.log('Metadata saved successfully:', savedMetadata);
+          await supabaseService.createTokenMetadata(metadata);
+          console.log('Metadata saved successfully');
         } catch (metadataError) {
           console.error('Failed to store metadata:', metadataError);
-          // Show error to user but don't fail the whole operation
-          throw new Error(`Token created but metadata save failed: ${metadataError instanceof Error ? metadataError.message : 'Unknown error'}`);
+          // Don't fail - contracts are deployed successfully
         }
-      } else {
-        console.error('Invalid token address received:', result.tokenAddress);
-        throw new Error('Token launch succeeded but received invalid token address');
       }
 
-      setState(prev => ({ ...prev, isLaunching: false }));
+      setState(prev => ({ ...prev, isLaunching: false, deploymentStep: 'complete' }));
       return result;
     } catch (error) {
+      console.error('Launch error:', error);
       const err = error instanceof Error ? error : new Error('Failed to launch token');
-      setState(prev => ({ ...prev, isLaunching: false, error: err }));
+      setState(prev => ({ ...prev, isLaunching: false, error: err, deploymentStep: 'failed' }));
       throw err;
     }
-  }, [account, address, buildCalldata]);
+  }, [account, address]);
 
   return {
     ...state,
