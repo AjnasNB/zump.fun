@@ -13,7 +13,7 @@
 CREATE TABLE IF NOT EXISTS token_metadata (
   token_address TEXT PRIMARY KEY,
   pool_address TEXT,
-  launch_id INTEGER,
+  launch_id TEXT,  -- Changed from INTEGER to TEXT to support large u256 values
   name TEXT NOT NULL,
   symbol TEXT NOT NULL,
   description TEXT,

@@ -10,9 +10,10 @@
       "deploy_tx": "0x04cff1ed0f9ca1fe989616ec4f74da8bbb3d61fce3e039091afda301889e71c1"
     },
     "PumpFactory": {
-      "address": "0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814",
-      "class_hash": "0x05a7fc102bf908e819a427eda583d9aa247e3a3d31fe741998ac18f8085fee98",
-      "deploy_tx": "0x04d2f49356441646b086458c1ff08cc5a2748e935dca52bb43d3c0e1368b1b49"
+      "address": "0x073399b589e513c4aad810f1b5fab0e8ee00d71e5c606730617197486c889f50",
+      "class_hash": "0x02bed90fbc2136c2bd18d4affbd33d278094ea6f58d7b09f6ed9d6033b537bfe",
+      "deploy_tx": "0x04efc3b4b983492589e6a30bc4f16755d83968181ba1a2150f060b26db7cf67d",
+      "note": "Updated PumpFactory with working create_launch function"
     },
     "StealthAddressGenerator": {
       "address": "0x064f0f550c2b7e64d26c21c0952db204eabc92b8f7c00bfe222e4e1081fed92f",

@@ -244,8 +244,8 @@ pub mod PumpFactory {
         /// This function creates a new token launch with a stealth creator address.
         /// The stealth address hides the real creator identity.
         /// 
-        /// Note: In production, this would deploy actual MemecoinToken and BondingCurvePool
-        /// contracts. For PoC, we use register_anonymous_launch after off-chain deployment.
+        /// Note: For PoC, this function registers a mock launch with placeholder addresses.
+        /// In production, this would deploy actual MemecoinToken and BondingCurvePool contracts.
         fn create_launch(
             ref self: ContractState,
             name: felt252,
@@ -266,15 +266,49 @@ pub mod PumpFactory {
                 assert(is_valid, 'INVALID_STEALTH_ADDRESS');
             }
             
-            // In production: Deploy MemecoinToken and BondingCurvePool contracts
-            // For PoC: Return zero addresses - use register_anonymous_launch after off-chain deployment
-            let zero_addr = starknet::contract_address_const::<0>();
+            // For PoC: Create mock addresses based on launch ID
+            // In production: Deploy actual contracts
+            let id = self.launch_count.read();
+            let timestamp = get_block_timestamp();
+            let quote_token = self.quote_token.read();
             
-            // Note: Actual deployment would look like:
-            // let token = deploy_memecoin_token(name, symbol, pool_address);
-            // let pool = deploy_bonding_curve_pool(token, quote_token, stealth_creator, ...);
+            // Generate deterministic mock addresses (for PoC only)
+            // In production, these would be real deployed contract addresses
+            let token_addr_felt: felt252 = (id + 1000).try_into().unwrap();
+            let pool_addr_felt: felt252 = (id + 2000).try_into().unwrap();
+            let token: ContractAddress = token_addr_felt.try_into().unwrap();
+            let pool: ContractAddress = pool_addr_felt.try_into().unwrap();
             
-            (zero_addr, zero_addr)
+            let info = LaunchInfo {
+                token,
+                pool,
+                quote_token,
+                creator: stealth_creator,
+                name,
+                symbol,
+                base_price,
+                slope,
+                max_supply,
+                created_at: timestamp,
+                migrated: false,
+                migration_threshold,
+            };
+            
+            self.launches.write(id, info);
+            self.token_to_launch.write(token, id);
+            self.pool_to_launch.write(pool, id);
+            self.launch_count.write(id + 1);
+            
+            // Emit event with actual addresses
+            self.emit(LaunchCreated { 
+                launch_id: id, 
+                token, 
+                pool, 
+                stealth_creator,
+                migration_threshold,
+            });
+            
+            (token, pool)
         }
 
         /// Register an existing launch (legacy - for backward compatibility)

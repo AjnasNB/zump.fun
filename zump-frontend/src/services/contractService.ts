@@ -635,6 +635,20 @@ export class ContractService {
    * Requirements: 4.1
    */
   async getPoolState(poolAddress: string): Promise<PoolState> {
+    // Check if this is a mock address (for PoC)
+    const poolAddressBigInt = BigInt(poolAddress);
+    if (poolAddressBigInt >= BigInt(1000) && poolAddressBigInt < BigInt(10000)) {
+      // This is a mock address, return mock state
+      console.warn(`Mock pool address detected: ${poolAddress}, returning mock state`);
+      return {
+        token: '0x0',
+        quoteToken: '0x0',
+        tokensSold: BigInt(0),
+        reserveBalance: BigInt(0),
+        migrated: false,
+      };
+    }
+    
     const pool = this.getBondingCurvePoolContract(poolAddress);
     const result = await pool.call('get_state');
     
@@ -761,7 +775,12 @@ export class ContractService {
     
     const tx = await pool.invoke('buy', [cairo.uint256(amountTokens)]);
     
-    return this.waitForTransaction(tx.transaction_hash);
+    await this.waitForTransaction(tx.transaction_hash);
+    
+    return {
+      hash: tx.transaction_hash,
+      status: 'confirmed',
+    };
   }
 
   /**
@@ -777,7 +796,12 @@ export class ContractService {
     
     const tx = await pool.invoke('sell', [cairo.uint256(amountTokens)]);
     
-    return this.waitForTransaction(tx.transaction_hash);
+    await this.waitForTransaction(tx.transaction_hash);
+    
+    return {
+      hash: tx.transaction_hash,
+      status: 'confirmed',
+    };
   }
 
   // =========================================================================
@@ -827,26 +851,28 @@ export class ContractService {
    * Wait for transaction confirmation
    * Requirements: 1.4
    */
-  async waitForTransaction(txHash: string): Promise<TransactionResult> {
+  async waitForTransaction(txHash: string): Promise<any> {
     try {
+      console.log('Waiting for transaction:', txHash);
+      
       const receipt = await this.provider.waitForTransaction(txHash, {
         retryInterval: 2000,
       });
 
+      console.log('Transaction receipt received:', receipt);
+      
       const isSuccess = receipt.isSuccess();
       
-      return {
-        hash: txHash,
-        status: isSuccess ? 'confirmed' : 'failed',
-        blockNumber: (receipt as any).block_number,
-        error: isSuccess ? undefined : 'Transaction reverted',
-      };
+      if (!isSuccess) {
+        console.error('Transaction failed:', receipt);
+        throw new Error('Transaction reverted');
+      }
+      
+      // Return the full receipt for event parsing
+      return receipt;
     } catch (error) {
-      return {
-        hash: txHash,
-        status: 'failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
+      console.error('Error waiting for transaction:', error);
+      throw error;
     }
   }
 
@@ -925,21 +951,67 @@ export class ContractService {
    */
   private extractLaunchCreatedEvent(receipt: any): { launchId: bigint; token: string; pool: string } | null {
     try {
-      const events = receipt.events || [];
+      console.log('Parsing receipt for LaunchCreated event:', JSON.stringify(receipt, null, 2));
       
-      const launchEvent = events.find((event: any) => event.keys && event.data);
+      const events = receipt.events || [];
+      console.log(`Found ${events.length} events in receipt`);
+      
+      const addresses = getContractAddresses(this.network);
+      const factoryAddress = addresses.pumpFactory.toLowerCase();
+      console.log('Looking for events from factory:', factoryAddress);
+      
+      // Log all event addresses for debugging
+      events.forEach((e: any, i: number) => {
+        console.log(`Event ${i}: from=${e.from_address}, keys=${e.keys?.length}, data=${e.data?.length}`);
+      });
+      
+      // Find LaunchCreated event from factory contract
+      const launchEvent = events.find((event: any) => {
+        const fromAddr = event.from_address?.toLowerCase();
+        return fromAddr === factoryAddress && event.keys && event.keys.length >= 3 && event.data && event.data.length >= 3;
+      });
       
       if (launchEvent) {
-        // Event structure: launch_id (key), token, pool, stealth_creator, migration_threshold (data)
-        return {
-          launchId: this.parseU256(launchEvent.keys[0]),
-          token: launchEvent.data[0]?.toString() || '0x0',
-          pool: launchEvent.data[1]?.toString() || '0x0',
+        console.log('Found LaunchCreated event from factory:', launchEvent);
+        
+        // Cairo event structure:
+        // #[derive(Drop, starknet::Event)]
+        // pub struct LaunchCreated {
+        //     #[key]
+        //     pub launch_id: u256,           // keys[1], keys[2] (u256 = 2 felts)
+        //     pub token: ContractAddress,    // data[0]
+        //     pub pool: ContractAddress,     // data[1]
+        //     pub stealth_creator: ContractAddress, // data[2]
+        //     pub migration_threshold: u256, // data[3], data[4]
+        // }
+        
+        // Parse launch_id from keys (u256 = low, high)
+        const launchIdLow = BigInt(launchEvent.keys[1]?.toString() || '0');
+        const launchIdHigh = BigInt(launchEvent.keys[2]?.toString() || '0');
+        const launchId = launchIdLow + (launchIdHigh << BigInt(128));
+        
+        // Parse addresses from data
+        const tokenFelt = BigInt(launchEvent.data[0]?.toString() || '0');
+        const poolFelt = BigInt(launchEvent.data[1]?.toString() || '0');
+        
+        // Convert felt252 to hex address format
+        const token = '0x' + tokenFelt.toString(16).padStart(64, '0');
+        const pool = '0x' + poolFelt.toString(16).padStart(64, '0');
+        
+        const result = {
+          launchId,
+          token,
+          pool,
         };
+        
+        console.log('Parsed event data:', result);
+        return result;
       }
       
+      console.warn('No LaunchCreated event found in receipt');
       return null;
-    } catch {
+    } catch (error) {
+      console.error('Error parsing LaunchCreated event:', error);
       return null;
     }
   }

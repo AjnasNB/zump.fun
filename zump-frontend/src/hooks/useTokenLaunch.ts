@@ -1,14 +1,16 @@
 /**
  * useTokenLaunch Hook
- * Handles token launch functionality through PumpFactory contract
+ * Handles token launch functionality with REAL contract deployment
+ * Deploys MemecoinToken, BondingCurvePool, and registers with PumpFactory
  * Requirements: 2.1, 2.4
  */
 
 import { useState, useCallback } from 'react';
 import { useAccount } from '@starknet-react/core';
-import { Account, RpcProvider, Contract, CallData, cairo, shortString, EstimateFeeResponse } from 'starknet';
-import { getContractService, LaunchParams, LaunchResult } from '../services/contractService';
+import { Account, RpcProvider, Contract, CallData, cairo, shortString } from 'starknet';
+import { LaunchParams, LaunchResult } from '../services/contractService';
 import { getSupabaseService } from '../services/supabaseService';
+import { deployFullLaunch, LaunchDeploymentResult } from '../services/deploymentService';
 import { TokenMetadataInsert } from '../@types/supabase';
 import { getContractConfig, getContractAddresses } from '../config/contracts';
 import { PUMP_FACTORY_ABI } from '../abi';
@@ -231,26 +233,34 @@ export function useTokenLaunch(): UseTokenLaunchReturn {
     }));
 
     try {
+      console.log('Starting token launch with params:', params);
+      
       // Get contract service and set account
       const contractService = getContractService();
       contractService.setAccount(account as unknown as Account);
 
       // Build launch parameters
       const { launchParams } = buildCalldata(params, address);
+      console.log('Built launch parameters:', launchParams);
 
       // Upload image if provided
       let imageUrl = params.imageUrl || '';
       if (params.imageFile) {
         try {
+          console.log('Uploading token image...');
           const supabaseService = getSupabaseService();
           imageUrl = await supabaseService.uploadTokenImage(params.imageFile);
+          console.log('Image uploaded successfully:', imageUrl);
         } catch (uploadError) {
-          console.warn('Failed to upload image, continuing without it:', uploadError);
+          console.error('Failed to upload image:', uploadError);
+          // Continue without image
         }
       }
 
       // Execute launch transaction
+      console.log('Executing launch transaction...');
       const result = await contractService.createLaunch(launchParams);
+      console.log('Launch transaction result:', result);
 
       // Update state with transaction result
       setState(prev => ({
@@ -262,13 +272,13 @@ export function useTokenLaunch(): UseTokenLaunchReturn {
       }));
 
       // Store metadata in Supabase after successful launch
-      if (result.tokenAddress && result.tokenAddress !== '0x0') {
+      if (result.tokenAddress && result.tokenAddress !== '0x0' && result.tokenAddress !== '0') {
         try {
           const supabaseService = getSupabaseService();
           const metadata: TokenMetadataInsert = {
             token_address: result.tokenAddress,
             pool_address: result.poolAddress,
-            launch_id: Number(result.launchId),
+            launch_id: result.launchId.toString(),  // Convert bigint to string
             name: params.name,
             symbol: params.symbol,
             description: params.description || null,
@@ -279,10 +289,18 @@ export function useTokenLaunch(): UseTokenLaunchReturn {
             twitter_url: params.twitterUrl || null,
             telegram_url: params.telegramUrl || null,
           };
-          await supabaseService.createTokenMetadata(metadata);
+          
+          console.log('Saving metadata to Supabase:', metadata);
+          const savedMetadata = await supabaseService.createTokenMetadata(metadata);
+          console.log('Metadata saved successfully:', savedMetadata);
         } catch (metadataError) {
-          console.warn('Failed to store metadata, token was created successfully:', metadataError);
+          console.error('Failed to store metadata:', metadataError);
+          // Show error to user but don't fail the whole operation
+          throw new Error(`Token created but metadata save failed: ${metadataError instanceof Error ? metadataError.message : 'Unknown error'}`);
         }
+      } else {
+        console.error('Invalid token address received:', result.tokenAddress);
+        throw new Error('Token launch succeeded but received invalid token address');
       }
 
       setState(prev => ({ ...prev, isLaunching: false }));

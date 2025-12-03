@@ -11,7 +11,7 @@
 export interface TokenMetadata {
   token_address: string;
   pool_address: string | null;
-  launch_id: number | null;
+  launch_id: string | null;  // Changed from number to string to support large u256 values
   name: string;
   symbol: string;
   description: string | null;
@@ -27,7 +27,7 @@ export interface TokenMetadata {
 export interface TokenMetadataInsert {
   token_address: string;
   pool_address?: string | null;
-  launch_id?: number | null;
+  launch_id?: string | null;  // Changed from number to string to support large u256 values
   name: string;
   symbol: string;
   description?: string | null;
@@ -42,7 +42,7 @@ export interface TokenMetadataInsert {
 
 export interface TokenMetadataUpdate {
   pool_address?: string | null;
-  launch_id?: number | null;
+  launch_id?: string | null;  // Changed from number to string to support large u256 values
   name?: string;
   symbol?: string;
   description?: string | null;

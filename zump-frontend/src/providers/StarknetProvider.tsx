@@ -5,14 +5,27 @@
  */
 
 import React, { ReactNode } from 'react';
-import { StarknetConfig, publicProvider, argent, braavos } from '@starknet-react/core';
-import { mainnet, sepolia } from '@starknet-react/chains';
+import { StarknetConfig, jsonRpcProvider, argent, braavos } from '@starknet-react/core';
+import { sepolia, mainnet } from '@starknet-react/chains';
 
-// Supported chains
-const chains = [mainnet, sepolia];
+// Supported chains - Sepolia FIRST for testnet deployment
+const chains = [sepolia, mainnet];
 
-// Provider function
-const provider = publicProvider();
+// Custom RPC provider to avoid CORS issues with public endpoints
+const rpcProvider = jsonRpcProvider({
+  rpc: (chain) => {
+    if (chain.id === sepolia.id) {
+      // Use Lava RPC for Sepolia (CORS-friendly)
+      return { 
+        nodeUrl: process.env.REACT_APP_STARKNET_RPC_URL || 'https://rpc.starknet-testnet.lava.build'
+      };
+    }
+    // Mainnet fallback (not used in testnet deployment)
+    return { 
+      nodeUrl: process.env.REACT_APP_STARKNET_RPC_URL_MAINNET || 'https://starknet-mainnet.public.blastapi.io/rpc/v0_7'
+    };
+  },
+});
 
 // Connectors: ArgentX, Braavos
 const connectors = [
@@ -28,7 +41,7 @@ export function StarknetProvider({ children }: StarknetProviderProps) {
   return (
     <StarknetConfig
       chains={chains}
-      provider={provider}
+      provider={rpcProvider}
       connectors={connectors}
       autoConnect
     >
