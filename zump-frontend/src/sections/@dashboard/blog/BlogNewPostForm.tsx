@@ -128,6 +128,8 @@ export default function BlogNewPostForm() {
 
   const [openPreview, setOpenPreview] = useState(false);
   const [showGasEstimate, setShowGasEstimate] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [launchResult, setLaunchResult] = useState<{ tokenAddress: string; symbol: string } | null>(null);
 
   const NewTokenSchema = Yup.object().shape({
     title: Yup.string()
@@ -266,15 +268,17 @@ export default function BlogNewPostForm() {
 
       const result = await launch(formData);
       
-      reset();
-      handleClosePreview();
-      enqueueSnackbar('Token launched successfully!', { variant: 'success' });
-      
-      // Navigate to token detail page
-      // Requirements: 2.5
+      // Store result and show success modal
       if (result.tokenAddress && result.tokenAddress !== '0x0') {
-        navigate(PATH_DASHBOARD.dn404.view(result.tokenAddress));
+        setLaunchResult({
+          tokenAddress: result.tokenAddress,
+          symbol: data.symbol,
+        });
+        setShowSuccessModal(true);
+        reset();
+        handleClosePreview();
       } else {
+        enqueueSnackbar('Token launched but address not received', { variant: 'warning' });
         navigate(PATH_DASHBOARD.dn404.bondingCurve);
       }
     } catch (err) {
@@ -655,6 +659,106 @@ export default function BlogNewPostForm() {
                 You will need to sign <strong>4 transactions</strong> in total.
               </Typography>
             </Alert>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Modal */}
+      <Dialog 
+        open={showSuccessModal} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            border: '1px solid rgba(0, 255, 136, 0.3)',
+            textAlign: 'center',
+          }
+        }}
+      >
+        <DialogContent>
+          <Box sx={{ py: 4 }}>
+            {/* Success Icon */}
+            <Box 
+              sx={{ 
+                width: 100, 
+                height: 100, 
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #00ff88 0%, #00d9ff 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px',
+                fontSize: 48,
+              }}
+            >
+              🎉
+            </Box>
+            
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
+              Token Launched Successfully!
+            </Typography>
+            
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+              Your token <strong>{launchResult?.symbol}</strong> has been deployed on Starknet
+            </Typography>
+            
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                display: 'block',
+                mb: 3,
+                color: 'text.secondary',
+                wordBreak: 'break-all',
+                px: 2,
+              }}
+            >
+              Contract: {launchResult?.tokenAddress}
+            </Typography>
+            
+            <Alert 
+              severity="info" 
+              sx={{ 
+                mb: 3,
+                backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                border: '1px solid rgba(0, 217, 255, 0.3)',
+              }}
+            >
+              <Typography variant="body2">
+                Please wait a few seconds for the blockchain to confirm your transactions before viewing your token.
+              </Typography>
+            </Alert>
+            
+            <Stack direction="row" spacing={2} justifyContent="center">
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  navigate(PATH_DASHBOARD.dn404.bondingCurve);
+                }}
+              >
+                View All Tokens
+              </Button>
+              <Button
+                variant="contained"
+                size="large"
+                sx={{
+                  background: 'linear-gradient(135deg, #00d9ff 0%, #00ff88 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #00c4e6 0%, #00e67a 100%)',
+                  },
+                }}
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  if (launchResult?.tokenAddress) {
+                    navigate(PATH_DASHBOARD.dn404.view(launchResult.tokenAddress));
+                  }
+                }}
+              >
+                View Your Token 🚀
+              </Button>
+            </Stack>
           </Box>
         </DialogContent>
       </Dialog>
