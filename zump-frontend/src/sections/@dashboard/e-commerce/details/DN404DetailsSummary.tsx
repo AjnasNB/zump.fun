@@ -789,9 +789,9 @@ export default function DN404DetailsSummary({
           )}
 
           <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            <Box sx={{ color: 'text.secondary', width: '100%' }}>
               {renderThumbnails}
-            </Typography>
+            </Box>
           </Stack>
         </Stack>
         <Box>
