@@ -9,9 +9,8 @@ documents
 .env.*.local
 .kiro
 
-# Deployment files
-deployments/*.json
-!deployments/.gitkeep
+# Deployment sensitive files (keep deployment addresses public)
+# deployments/*.json - These are public contract addresses, safe to commit
 
 # IDE
 .vscode/

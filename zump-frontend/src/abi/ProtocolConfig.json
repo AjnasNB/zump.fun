@@ -1,0 +1,297 @@
+﻿[
+    {
+        "type":  "impl",
+        "name":  "ProtocolConfigImpl",
+        "interface_name":  "pump_fun::protocol_config::IProtocolConfig"
+    },
+    {
+        "type":  "struct",
+        "name":  "pump_fun::protocol_config::FeeConfig",
+        "members":  [
+                        {
+                            "name":  "fee_bps",
+                            "type":  "core::integer::u16"
+                        },
+                        {
+                            "name":  "fee_receiver",
+                            "type":  "core::starknet::contract_address::ContractAddress"
+                        }
+                    ]
+    },
+    {
+        "type":  "struct",
+        "name":  "core::integer::u256",
+        "members":  [
+                        {
+                            "name":  "low",
+                            "type":  "core::integer::u128"
+                        },
+                        {
+                            "name":  "high",
+                            "type":  "core::integer::u128"
+                        }
+                    ]
+    },
+    {
+        "type":  "struct",
+        "name":  "pump_fun::protocol_config::CurveLimits",
+        "members":  [
+                        {
+                            "name":  "min_base_price",
+                            "type":  "core::integer::u256"
+                        },
+                        {
+                            "name":  "max_base_price",
+                            "type":  "core::integer::u256"
+                        },
+                        {
+                            "name":  "min_slope",
+                            "type":  "core::integer::u256"
+                        },
+                        {
+                            "name":  "max_slope",
+                            "type":  "core::integer::u256"
+                        },
+                        {
+                            "name":  "min_supply",
+                            "type":  "core::integer::u256"
+                        },
+                        {
+                            "name":  "max_supply",
+                            "type":  "core::integer::u256"
+                        }
+                    ]
+    },
+    {
+        "type":  "interface",
+        "name":  "pump_fun::protocol_config::IProtocolConfig",
+        "items":  [
+                      {
+                          "type":  "function",
+                          "name":  "get_fee_config",
+                          "inputs":  [
+
+                                     ],
+                          "outputs":  [
+                                          {
+                                              "type":  "pump_fun::protocol_config::FeeConfig"
+                                          }
+                                      ],
+                          "state_mutability":  "view"
+                      },
+                      {
+                          "type":  "function",
+                          "name":  "set_fee_config",
+                          "inputs":  [
+                                         {
+                                             "name":  "fee_bps",
+                                             "type":  "core::integer::u16"
+                                         },
+                                         {
+                                             "name":  "fee_receiver",
+                                             "type":  "core::starknet::contract_address::ContractAddress"
+                                         }
+                                     ],
+                          "outputs":  [
+
+                                      ],
+                          "state_mutability":  "external"
+                      },
+                      {
+                          "type":  "function",
+                          "name":  "get_curve_limits",
+                          "inputs":  [
+
+                                     ],
+                          "outputs":  [
+                                          {
+                                              "type":  "pump_fun::protocol_config::CurveLimits"
+                                          }
+                                      ],
+                          "state_mutability":  "view"
+                      },
+                      {
+                          "type":  "function",
+                          "name":  "set_curve_limits",
+                          "inputs":  [
+                                         {
+                                             "name":  "min_base_price",
+                                             "type":  "core::integer::u256"
+                                         },
+                                         {
+                                             "name":  "max_base_price",
+                                             "type":  "core::integer::u256"
+                                         },
+                                         {
+                                             "name":  "min_slope",
+                                             "type":  "core::integer::u256"
+                                         },
+                                         {
+                                             "name":  "max_slope",
+                                             "type":  "core::integer::u256"
+                                         },
+                                         {
+                                             "name":  "min_supply",
+                                             "type":  "core::integer::u256"
+                                         },
+                                         {
+                                             "name":  "max_supply",
+                                             "type":  "core::integer::u256"
+                                         }
+                                     ],
+                          "outputs":  [
+
+                                      ],
+                          "state_mutability":  "external"
+                      },
+                      {
+                          "type":  "function",
+                          "name":  "get_owner",
+                          "inputs":  [
+
+                                     ],
+                          "outputs":  [
+                                          {
+                                              "type":  "core::starknet::contract_address::ContractAddress"
+                                          }
+                                      ],
+                          "state_mutability":  "view"
+                      }
+                  ]
+    },
+    {
+        "type":  "constructor",
+        "name":  "constructor",
+        "inputs":  [
+                       {
+                           "name":  "owner",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "fee_bps",
+                           "type":  "core::integer::u16"
+                       },
+                       {
+                           "name":  "fee_receiver",
+                           "type":  "core::starknet::contract_address::ContractAddress"
+                       },
+                       {
+                           "name":  "min_base_price",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "max_base_price",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "min_slope",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "max_slope",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "min_supply",
+                           "type":  "core::integer::u256"
+                       },
+                       {
+                           "name":  "max_supply",
+                           "type":  "core::integer::u256"
+                       }
+                   ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::protocol_config::ProtocolConfig::FeeConfigUpdated",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "fee_bps",
+                            "type":  "core::integer::u16",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "fee_receiver",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::protocol_config::ProtocolConfig::CurveLimitsUpdated",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "min_base_price",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "max_base_price",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "min_slope",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "max_slope",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "min_supply",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "max_supply",
+                            "type":  "core::integer::u256",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::protocol_config::ProtocolConfig::OwnershipTransferred",
+        "kind":  "struct",
+        "members":  [
+                        {
+                            "name":  "previous_owner",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "data"
+                        },
+                        {
+                            "name":  "new_owner",
+                            "type":  "core::starknet::contract_address::ContractAddress",
+                            "kind":  "data"
+                        }
+                    ]
+    },
+    {
+        "type":  "event",
+        "name":  "pump_fun::protocol_config::ProtocolConfig::Event",
+        "kind":  "enum",
+        "variants":  [
+                         {
+                             "name":  "FeeConfigUpdated",
+                             "type":  "pump_fun::protocol_config::ProtocolConfig::FeeConfigUpdated",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "CurveLimitsUpdated",
+                             "type":  "pump_fun::protocol_config::ProtocolConfig::CurveLimitsUpdated",
+                             "kind":  "nested"
+                         },
+                         {
+                             "name":  "OwnershipTransferred",
+                             "type":  "pump_fun::protocol_config::ProtocolConfig::OwnershipTransferred",
+                             "kind":  "nested"
+                         }
+                     ]
+    }
+]

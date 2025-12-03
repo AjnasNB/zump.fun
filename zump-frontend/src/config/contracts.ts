@@ -25,19 +25,19 @@ export interface ContractConfig {
   chainId: string;
 }
 
-// Sepolia testnet configuration
+// Sepolia testnet configuration - DEPLOYED 2025-12-03
 const SEPOLIA_CONFIG: ContractConfig = {
   addresses: {
-    // These addresses should be updated after deployment
-    pumpFactory: process.env.REACT_APP_PUMP_FACTORY_ADDRESS || '0x0',
-    protocolConfig: process.env.REACT_APP_PROTOCOL_CONFIG_ADDRESS || '0x0',
+    // Deployed contract addresses on Sepolia testnet
+    pumpFactory: process.env.REACT_APP_PUMP_FACTORY_ADDRESS || '0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814',
+    protocolConfig: process.env.REACT_APP_PROTOCOL_CONFIG_ADDRESS || '0x008c776746428bad63e71142247ddb24963d8ea68de66733ca76f1f50006b34f',
     quoteToken: process.env.REACT_APP_QUOTE_TOKEN_ADDRESS || '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d', // STRK on Sepolia
-    stealthAddressGenerator: process.env.REACT_APP_STEALTH_GENERATOR_ADDRESS || '0x0',
-    nullifierRegistry: process.env.REACT_APP_NULLIFIER_REGISTRY_ADDRESS || '0x0',
-    zkProofVerifier: process.env.REACT_APP_ZK_VERIFIER_ADDRESS || '0x0',
+    stealthAddressGenerator: process.env.REACT_APP_STEALTH_GENERATOR_ADDRESS || '0x0', // Not deployed yet (optional for MVP)
+    nullifierRegistry: process.env.REACT_APP_NULLIFIER_REGISTRY_ADDRESS || '0x0', // Not deployed yet (optional for MVP)
+    zkProofVerifier: process.env.REACT_APP_ZK_VERIFIER_ADDRESS || '0x0', // Not deployed yet (optional for MVP)
   },
-  rpcUrl: process.env.REACT_APP_STARKNET_RPC_URL || 'https://starknet-sepolia.public.blastapi.io',
-  explorerUrl: 'https://sepolia.starkscan.co',
+  rpcUrl: process.env.REACT_APP_STARKNET_RPC_URL || 'https://rpc.starknet-testnet.lava.build',
+  explorerUrl: 'https://sepolia.voyager.online',
   chainId: 'SN_SEPOLIA',
 };
 

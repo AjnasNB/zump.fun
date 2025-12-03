@@ -1,0 +1,21 @@
+{
+  "network": "sepolia",
+  "rpc": "https://rpc.starknet-testnet.lava.build",
+  "deployed_at": "2025-12-03",
+  "class_hashes": {
+    "ProtocolConfig": "0x0534c30dc743f0da15549d8f1f7b7f1c76e6f65dfa7052b5fb277b5ed471ed0d",
+    "MemecoinToken": "0x05760e0c93665dcbe1ee270331b7fc1624e2084d15438f6a9075a3f0dc2a885f",
+    "BondingCurvePool": "0x039e341c7a61fe3ed1692a85c464b7f820d67fedafed195449ac1786347654c7",
+    "PumpFactory": "0x05a7fc102bf908e819a427eda583d9aa247e3a3d31fe741998ac18f8085fee98",
+    "StealthAddressGenerator": "0x03568871d6930a1800dffb51e9f180d341ac7cc436f951bfb6f1a32abd639bfe",
+    "CommitmentTree": "0x04a47bd5c77a538ac436d7b4a2966c1e725786e54e7466a40c81621da90172af",
+    "NullifierRegistry": "0x0482c6de7a25d10da3b9925349cc2a5f73fa2445b7b3db4e6fdd87a1fca6ea1e",
+    "ZKProofVerifier": "0x010fa2ba1e52412addfd0fdc5e3b9054498ec124654aa22522c815ee6595fc78",
+    "DarkPoolMixer": "0x073f391fac86d27049af4f2a7253c9d8277829c44837493dd6444d9d55ac580b",
+    "PrivacyRelayer": "0x07f0ea59304589e6c802f9b69f4820d5e6a8dbef84e184a8460ce2b125fa28dc",
+    "EncryptedStateManager": "0x04be0fd2de378f92618b47d471bcfa5a168efc1ee24cece8fe6eac289ffbe3fe",
+    "LiquidityMigration": "0x07447cd3a9b559ca301d22104446bbd4af82238de4d8a9a780aacba5f914ef32",
+    "ZkDexHook": "0x02eaf378c05581ed5294168d2c7ec49a0473c82c60a94c0179e84fa0ba8fb165"
+  }
+}
+
