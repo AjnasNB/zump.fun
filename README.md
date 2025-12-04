@@ -41,6 +41,151 @@ Financial privacy in blockchain is fundamentally broken:
 - ✅ Zero wallet linkability between primary and stealth accounts
 - ✅ Nullifier-based transaction privacy
 
+## 🌐 Testnet Deployment
+
+### Network Information
+
+| Property | Value |
+|----------|-------|
+| **Network** | Starknet Sepolia Testnet |
+| **RPC** | `https://rpc.starknet-testnet.lava.build` |
+| **Chain ID** | `SN_SEPOLIA` |
+
+### Deployed Contracts
+
+#### Core Contracts
+
+| Contract | Address | Explorer |
+|----------|---------|----------|
+| ProtocolConfig | `0x008c776746428bad63e71142247ddb24963d8ea68de66733ca76f1f50006b34f` | [Voyager](https://sepolia.voyager.online/contract/0x008c776746428bad63e71142247ddb24963d8ea68de66733ca76f1f50006b34f) |
+| PumpFactory | `0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814` | [Voyager](https://sepolia.voyager.online/contract/0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814) |
+
+#### Privacy & Infrastructure Contracts
+
+| Contract | Address | Explorer |
+|----------|---------|----------|
+| StealthAddressGenerator | `0x064f0f550c2b7e64d26c21c0952db204eabc92b8f7c00bfe222e4e1081fed92f` | [Voyager](https://sepolia.voyager.online/contract/0x064f0f550c2b7e64d26c21c0952db204eabc92b8f7c00bfe222e4e1081fed92f) |
+| CommitmentTree | `0x026ef549f0fd89855c35802895f3cc4bdd682c1184defc8c30a57f091dc312ec` | [Voyager](https://sepolia.voyager.online/contract/0x026ef549f0fd89855c35802895f3cc4bdd682c1184defc8c30a57f091dc312ec) |
+| NullifierRegistry | `0x042025d0436d3fb24efc2f54bb80b96374834cb738ce0e97f1dc1403f20103f9` | [Voyager](https://sepolia.voyager.online/contract/0x042025d0436d3fb24efc2f54bb80b96374834cb738ce0e97f1dc1403f20103f9) |
+| ZKProofVerifier | `0x058b44f91d29735df077a3c9a2dcf89b3a267e46516a7954687a307781291adf` | [Voyager](https://sepolia.voyager.online/contract/0x058b44f91d29735df077a3c9a2dcf89b3a267e46516a7954687a307781291adf) |
+| DarkPoolMixer | `0x04c0c9b0fcbb2f45b31ccda688fb95af193f8b745713fcedc6763f630b1b25e7` | [Voyager](https://sepolia.voyager.online/contract/0x04c0c9b0fcbb2f45b31ccda688fb95af193f8b745713fcedc6763f630b1b25e7) |
+| PrivacyRelayer | `0x05933b0cc0bd3926730db1a9746f8610a474e820efacd625371a6fb1cfd1c744` | [Voyager](https://sepolia.voyager.online/contract/0x05933b0cc0bd3926730db1a9746f8610a474e820efacd625371a6fb1cfd1c744) |
+| EncryptedStateManager | `0x07067de4049e782c55c9dbd6157e5c97d1224ae76de3fe1912af4e59eed20a44` | [Voyager](https://sepolia.voyager.online/contract/0x07067de4049e782c55c9dbd6157e5c97d1224ae76de3fe1912af4e59eed20a44) |
+| LiquidityMigration | `0x0066136ec75eced3807da383b287877a3ee40b78d3190de47b940e0666729790` | [Voyager](https://sepolia.voyager.online/contract/0x0066136ec75eced3807da383b287877a3ee40b78d3190de47b940e0666729790) |
+| ZkDexHook | `0x047db2d84db630911902930cc6f9286e4e0ae27fe1eb808fcebf2a45d604117b` | [Voyager](https://sepolia.voyager.online/contract/0x047db2d84db630911902930cc6f9286e4e0ae27fe1eb808fcebf2a45d604117b) |
+
+#### Class Hashes (Declared Contracts)
+
+<details>
+<summary>Click to expand class hashes</summary>
+
+| Contract | Class Hash |
+|----------|------------|
+| ProtocolConfig | `0x0534c30dc743f0da15549d8f1f7b7f1c76e6f65dfa7052b5fb277b5ed471ed0d` |
+| MemecoinToken | `0x05760e0c93665dcbe1ee270331b7fc1624e2084d15438f6a9075a3f0dc2a885f` |
+| BondingCurvePool | `0x039e341c7a61fe3ed1692a85c464b7f820d67fedafed195449ac1786347654c7` |
+| PumpFactory | `0x05a7fc102bf908e819a427eda583d9aa247e3a3d31fe741998ac18f8085fee98` |
+| StealthAddressGenerator | `0x03568871d6930a1800dffb51e9f180d341ac7cc436f951bfb6f1a32abd639bfe` |
+| CommitmentTree | `0x04a47bd5c77a538ac436d7b4a2966c1e725786e54e7466a40c81621da90172af` |
+| NullifierRegistry | `0x0482c6de7a25d10da3b9925349cc2a5f73fa2445b7b3db4e6fdd87a1fca6ea1e` |
+| ZKProofVerifier | `0x010fa2ba1e52412addfd0fdc5e3b9054498ec124654aa22522c815ee6595fc78` |
+| DarkPoolMixer | `0x073f391fac86d27049af4f2a7253c9d8277829c44837493dd6444d9d55ac580b` |
+| PrivacyRelayer | `0x07f0ea59304589e6c802f9b69f4820d5e6a8dbef84e184a8460ce2b125fa28dc` |
+| EncryptedStateManager | `0x04be0fd2de378f92618b47d471bcfa5a168efc1ee24cece8fe6eac289ffbe3fe` |
+| LiquidityMigration | `0x07447cd3a9b559ca301d22104446bbd4af82238de4d8a9a780aacba5f914ef32` |
+| ZkDexHook | `0x02eaf378c05581ed5294168d2c7ec49a0473c82c60a94c0179e84fa0ba8fb165` |
+
+</details>
+
+#### Token Addresses
+
+| Token | Address |
+|-------|---------|
+| STRK (Quote Token) | `0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d` |
+| ETH | `0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7` |
+
+### Deployment Account
+
+| Property | Value |
+|----------|-------|
+| **Address** | `0x039d367513530e4ae9851569c73994fabbfebeb08e2609c161756fc88b388046` |
+| **Type** | OpenZeppelin Account |
+
+### Frontend Configuration
+
+Update `zump-frontend/src/config/contracts.ts` with the deployed addresses:
+
+```typescript
+const SEPOLIA_CONFIG: ContractConfig = {
+  addresses: {
+    pumpFactory: '0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814',
+    protocolConfig: '0x008c776746428bad63e71142247ddb24963d8ea68de66733ca76f1f50006b34f',
+    quoteToken: '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d',
+    // Privacy contracts not deployed for MVP
+    stealthAddressGenerator: '0x0',
+    nullifierRegistry: '0x0',
+    zkProofVerifier: '0x0',
+  },
+  rpcUrl: 'https://rpc.starknet-testnet.lava.build',
+  explorerUrl: 'https://sepolia.voyager.online',
+  chainId: 'SN_SEPOLIA',
+};
+```
+
+### Environment Variables
+
+Create a `.env` file in `zump-frontend/`:
+
+```bash
+# Starknet Configuration
+REACT_APP_STARKNET_NETWORK=sepolia
+REACT_APP_STARKNET_RPC_URL=https://rpc.starknet-testnet.lava.build
+
+# Contract Addresses
+REACT_APP_PUMP_FACTORY_ADDRESS=0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814
+REACT_APP_PROTOCOL_CONFIG_ADDRESS=0x008c776746428bad63e71142247ddb24963d8ea68de66733ca76f1f50006b34f
+REACT_APP_QUOTE_TOKEN_ADDRESS=0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
+
+# Supabase (configure after setup)
+REACT_APP_SUPABASE_URL=your_supabase_url
+REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### Verification
+
+Verify deployment by calling view functions:
+
+```bash
+# Check ProtocolConfig owner
+starkli call 0x008c776746428bad63e71142247ddb24963d8ea68de66733ca76f1f50006b34f get_owner --rpc https://rpc.starknet-testnet.lava.build
+
+# Check PumpFactory owner  
+starkli call 0x0101c880e4c5289d1db647c94cd0e83227c3b3c1b54814773905095554947814 owner --rpc https://rpc.starknet-testnet.lava.build
+```
+
+### Troubleshooting
+
+<details>
+<summary>Common Issues & Solutions</summary>
+
+**RPC Rate Limiting**
+- Use alternative RPC: `https://starknet-sepolia.g.alchemy.com/v2/YOUR_KEY`
+- Or create free account at Infura/Alchemy
+
+**Insufficient Balance**
+- Get testnet STRK from: https://starknet-faucet.vercel.app/
+- Account needs ~0.01 STRK for deployment
+
+**Invalid Nonce Error**
+- Wait a few seconds between transactions
+- Network may be congested
+
+**CASM Hash Mismatch**
+- Use `--casm-hash` flag with the expected hash from error message
+- This happens when network has different compiler version
+
+</details>
+
 ## 🏗️ Architecture
 
 ### Privacy-First System Overview
