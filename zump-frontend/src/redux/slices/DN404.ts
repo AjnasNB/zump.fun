@@ -257,7 +257,7 @@ function convertLaunchToProduct(
 
   // Convert bigint to number for display (with scaling)
   const priceNumber = Number(currentPrice) / 1e18;
-  const marketCapNumber = Number(marketCap) / 1e36; // price * tokens, both scaled
+  const marketCapNumber = Number(marketCap) / 1e18;
 
   // Use metadata image or default placeholder
   const imageUrl = metadata?.image_url || DEFAULT_TOKEN_IMAGE;
@@ -279,16 +279,16 @@ function convertLaunchToProduct(
     status: poolState?.migrated ? 'migrated' : 'active',
     inventoryType: poolState?.migrated ? 'Migrated' : 'In Progress',
     sizes: [],
-    available: Number(launch.maxSupply - tokensSold),
+    available: Number(launch.maxSupply - tokensSold) / 1e18,
     description: metadata?.description || '',
-    sold: Number(tokensSold),
+    sold: Number(tokensSold) / 1e18,
     createdAt: metadata?.created_at || new Date(Number(launch.createdAt) * 1000).toISOString(),
     category: 'Token',
     gender: 'Unisex',
     // Zump.fun specific fields
-    name: metadata?.name || launch.name || 'Unknown Token',
-    symbol: metadata?.symbol || launch.symbol || '???',
-    wallet: metadata?.creator_address || '0x0',
+    name: metadata?.name && metadata.name !== 'Unknown Token' ? metadata.name : launch.name || 'Unknown Token',
+    symbol: metadata?.symbol && metadata.symbol !== '???' ? metadata.symbol : launch.symbol || '???',
+    wallet: launch.creator || metadata?.creator_address || '0x0',
     contract: launch.token,
     poolAddress: launch.pool,
     bondingCurveProccess: progress,
@@ -296,11 +296,11 @@ function convertLaunchToProduct(
     holdersCount: 0, // Would need separate query
     totalDeposit: Number(poolState?.reserveBalance || BigInt(0)) / 1e18,
     // Privacy features
-    isPrivate: !poolState?.migrated,
-    isMigrated: poolState?.migrated || false,
-    stealthLaunch: true,
-    creatorRevealed: false,
-    privacyLevel: poolState?.migrated ? 'public' : 'stealth',
+    isPrivate: false,
+    isMigrated: false,
+    stealthLaunch: false,
+    creatorRevealed: true,
+    privacyLevel: 'public',
   };
 }
 
@@ -325,21 +325,17 @@ export function getProducts(forceRefresh = false) {
       } else {
         const contractService = getContractService();
 
-        // Fetch all launches from PumpFactory
         launches = await contractService.getAllLaunches();
-
-        // Fetch pool states for each launch
         poolStates = new Map();
-        const poolStatePromises = launches.map(async (launch) => {
-          try {
-            const state = await contractService.getPoolState(launch.pool);
-            poolStates.set(launch.pool, state);
-          } catch (err) {
-            console.error(`Failed to fetch pool state for ${launch.pool}:`, err);
-          }
+        launches.forEach((launch) => {
+          poolStates.set(launch.pool, {
+            token: launch.token,
+            quoteToken: launch.quoteToken,
+            tokensSold: launch.tokensSold,
+            reserveBalance: launch.reserveBalance,
+            migrated: launch.migrated,
+          });
         });
-
-        await Promise.all(poolStatePromises);
 
         // Update cache
         onChainCache = {
@@ -399,13 +395,22 @@ export function getProduct(name: string) {
       const contractService = getContractService();
 
       // First try to find in cache
+      const matchesSlug = (l: PublicLaunchInfo) =>
+        paramCase(l.name) === name ||
+        paramCase(l.symbol) === name ||
+        l.token.toLowerCase() === name.toLowerCase();
+
       if (onChainCache.launches.length > 0) {
-        const launch = onChainCache.launches.find(
-          (l) => paramCase(l.name) === name || l.token === name
-        );
+        const launch = onChainCache.launches.find(matchesSlug);
 
         if (launch) {
-          const poolState = onChainCache.poolStates.get(launch.pool) || null;
+          const poolState = onChainCache.poolStates.get(launch.pool) || {
+            token: launch.token,
+            quoteToken: launch.quoteToken,
+            tokensSold: launch.tokensSold,
+            reserveBalance: launch.reserveBalance,
+            migrated: launch.migrated,
+          };
 
           // Fetch metadata
           let metadata: TokenMetadata | null = null;
@@ -424,19 +429,20 @@ export function getProduct(name: string) {
 
       // Fetch all launches and find the matching one
       const launches = await contractService.getAllLaunches();
-      const launch = launches.find((l) => paramCase(l.name) === name || l.token === name);
+      const launch =
+        launches.find(matchesSlug) || (launches.length === 1 ? launches[0] : undefined);
 
       if (!launch) {
         throw new Error(`Token not found: ${name}`);
       }
 
-      // Fetch pool state
-      let poolState: PoolState | null = null;
-      try {
-        poolState = await contractService.getPoolState(launch.pool);
-      } catch (err) {
-        console.error('Failed to fetch pool state:', err);
-      }
+      const poolState: PoolState = {
+        token: launch.token,
+        quoteToken: launch.quoteToken,
+        tokensSold: launch.tokensSold,
+        reserveBalance: launch.reserveBalance,
+        migrated: launch.migrated,
+      };
 
       // Fetch metadata
       let metadata: TokenMetadata | null = null;

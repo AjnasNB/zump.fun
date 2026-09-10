@@ -10,13 +10,9 @@ import {
   Typography,
   LinearProgress,
   Tooltip,
-  Chip,
 } from '@mui/material';
-// routes
-import TextMaxLine from 'src/components/text-max-line';
 import { formatAddress } from 'src/utils/formatAddress';
-import { useLocales } from 'src/locales';
-import { Notpump_DEFINE_FAIRLAUNCH, WALLET } from 'src/descriptions/DN404';
+import { WALLET } from 'src/descriptions/DN404';
 import { PATH_DASHBOARD } from '../../../../routes/paths';
 // utils
 import { fCurrency, fShortenNumber } from '../../../../utils/formatNumber';
@@ -31,7 +27,6 @@ import Label from '../../../../components/label';
 import Image from '../../../../components/image';
 import { ColorPreview } from '../../../../components/color-utils';
 
-// ----------------------------------------------------------------------
 
 type Props = {
   product: IDN404MetaData;
@@ -59,7 +54,6 @@ export default function DN404Card({ product }: Props) {
   const dispatch = useDispatch();
 
   const linkTo = PATH_DASHBOARD.dn404.view(paramCase(name));
-  const { translate } = useLocales();
 
   // Use on-chain bonding curve progress or fallback
   const progress = bondingCurveProccess ?? 0;
@@ -69,11 +63,8 @@ export default function DN404Card({ product }: Props) {
     if (isMigrated) {
       return { label: 'Migrated', color: 'success' as const };
     }
-    if (privacyLevel === 'ghost') {
-      return { label: 'Ghost', color: 'secondary' as const };
-    }
-    if (privacyLevel === 'stealth') {
-      return { label: 'Stealth', color: 'info' as const };
+    if (privacyLevel === 'ghost' || privacyLevel === 'stealth') {
+      return { label: 'Live', color: 'info' as const };
     }
     if (status === 'active') {
       return { label: 'Active', color: 'primary' as const };
@@ -150,7 +141,7 @@ export default function DN404Card({ product }: Props) {
         <Image alt={name} src={coverUrl} ratio="1/1" sx={{ borderRadius: 1.5 }} />
       </Box>
 
-      {/* Bonding Curve Progress */}
+      {/* Bonding curve progress */}
       <Stack spacing={1} sx={{ pl: 1, pr: 3, pt: 0 }} direction="row" alignItems="center">
         <LinearProgress
           variant="determinate"
@@ -164,28 +155,7 @@ export default function DN404Card({ product }: Props) {
             borderRadius: 1,
           }}
         />
-        <Tooltip title={`Bonding Curve: ${progress.toFixed(1)}%`} arrow>
-          <Box component="span">
-            <Iconify icon="eva:info-outline" color="gray" width={16} />
-          </Box>
-        </Tooltip>
-      </Stack>
-
-      {/* Fair Launch Progress */}
-      <Stack spacing={1} sx={{ pl: 1, pr: 3, pt: 0.5 }} direction="row" alignItems="center">
-        <LinearProgress
-          color="warning"
-          variant="determinate"
-          value={Math.min(progress * 1.2, 100)} // Slightly ahead for visual effect
-          sx={{
-            mx: 2,
-            mr: 0.5,
-            flexGrow: 1,
-            height: 6,
-            borderRadius: 1,
-          }}
-        />
-        <Tooltip title={`${translate(Notpump_DEFINE_FAIRLAUNCH)}`} arrow>
+        <Tooltip title={`Bonding curve: ${progress.toFixed(1)}%`} arrow>
           <Box component="span">
             <Iconify icon="eva:info-outline" color="gray" width={16} />
           </Box>
@@ -193,7 +163,14 @@ export default function DN404Card({ product }: Props) {
       </Stack>
 
       <Stack spacing={1} sx={{ p: 3, pt: 2 }}>
-        <Link component={RouterLink} to={linkTo} color="inherit" variant="subtitle2" noWrap>
+        <Link
+          component={RouterLink}
+          to={linkTo}
+          state={{ tokenAddress: product.contract, poolAddress: product.poolAddress }}
+          color="inherit"
+          variant="subtitle2"
+          noWrap
+        >
           {symbol?.toUpperCase() || name.split(' ')[0].toUpperCase()} / ({name})
         </Link>
         <Typography sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
@@ -203,10 +180,10 @@ export default function DN404Card({ product }: Props) {
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Stack spacing={0.5} sx={{ typography: 'subtitle1' }}>
             <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
-              MC: {fCurrency(marketCap || 0)}
+              MC: {marketCap ? fCurrency(marketCap) : '$0'}
             </Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
-              Sold: {fShortenNumber(product?.sold || 0)}
+              Sold: {product?.sold ? fShortenNumber(product.sold) : '0'}
             </Typography>
           </Stack>
 

@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAccount } from '@starknet-react/core';
+import { useAccount } from '../providers/BotChainProvider';
 import { getContractService } from '../services/contractService';
 import { getSupabaseService } from '../services/supabaseService';
 import { TokenMetadata } from '../@types/supabase';

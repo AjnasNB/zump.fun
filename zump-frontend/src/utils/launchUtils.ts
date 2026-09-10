@@ -156,21 +156,12 @@ export const formatAddress = (address: string, startChars: number = 6, endChars:
 /**
  * Build explorer URL for transaction
  */
-export const getExplorerTxUrl = (txHash: string, network: 'mainnet' | 'sepolia' = 'sepolia'): string => {
-  const baseUrl = network === 'mainnet' 
-    ? 'https://starkscan.co' 
-    : 'https://sepolia.starkscan.co';
-  return `${baseUrl}/tx/${txHash}`;
+export const getExplorerTxUrl = (_txHash: string, _network?: string): string => {
+  return `https://scan.botchain.ai/tx/${_txHash}`;
 };
 
-/**
- * Build explorer URL for contract/address
- */
-export const getExplorerAddressUrl = (address: string, network: 'mainnet' | 'sepolia' = 'sepolia'): string => {
-  const baseUrl = network === 'mainnet' 
-    ? 'https://starkscan.co' 
-    : 'https://sepolia.starkscan.co';
-  return `${baseUrl}/contract/${address}`;
+export const getExplorerAddressUrl = (_address: string, _network?: string): string => {
+  return `https://scan.botchain.ai/address/${_address}`;
 };
 
 export default {

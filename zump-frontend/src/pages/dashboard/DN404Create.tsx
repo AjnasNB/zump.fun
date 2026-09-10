@@ -18,12 +18,12 @@ export default function DN404Create() {
   return (
     <>
       <Helmet>
-        <title> 👻 Create Private Memecoin | Zump.fun</title>
+        <title>Launch Token | Zump.fun</title>
       </Helmet>
 
       <Container maxWidth={themeStretch ? false : 'lg'}>
         <CustomBreadcrumbs
-          heading="🚀 Launch Your Private Memecoin"
+          heading="Launch a Memecoin"
           links={[
             {
               name: Notpump_DN404,

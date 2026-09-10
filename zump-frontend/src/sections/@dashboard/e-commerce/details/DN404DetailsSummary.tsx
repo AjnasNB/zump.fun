@@ -9,10 +9,8 @@ import {
   Button,
   CircularProgress,
   Divider,
-  Grid,
   IconButton,
   InputAdornment,
-  LinearProgress,
   Slider,
   Stack,
   Tab,
@@ -34,20 +32,15 @@ import { ICheckoutCartItem, IDN404MetaData } from '../../../../@types/DN404';
 // _mock
 import { _socials } from '../../../../_mock/arrays';
 // components
-import FormProvider, { RHFTextField } from '../../../../components/hook-form';
+import FormProvider from '../../../../components/hook-form';
 import Iconify from '../../../../components/iconify';
 import Label from '../../../../components/label';
 // hooks
 import { useTrading } from '../../../../hooks/useTrading';
-// @mui
-// utils
+import { useAccount, useConnect } from '../../../../providers/BotChainProvider';
 import { bgGradient } from '../../../../utils/cssStyles';
-// @types
-// components
 import Carousel from '../../../../components/carousel';
 import Image from '../../../../components/image';
-import { DN404DerivativeChart } from '../../general/e-commerce';
-import { AppWidgetSummary } from '../../general/app';
 
 const THUMB_SIZE = 64;
 
@@ -138,6 +131,8 @@ export default function DN404DetailsSummary({
   onTradeSuccess,
   ...other
 }: Props) {
+  const { isConnected } = useAccount();
+  const { connect } = useConnect();
   const navigate = useNavigate();
 
   const {
@@ -302,11 +297,13 @@ export default function DN404DetailsSummary({
 
   // Handle max button click - use token balance for sell, quote balance for buy
   const handleMaxClick = () => {
-    if (currentTabTrade === 'trade' && userQuoteBalance) {
-      // Buy tab - show STRK balance
-      setTradeAmount(formatBigIntWithDecimals(userQuoteBalance, DECIMALS, 6));
-    } else if (currentTabTrade !== 'trade' && userTokenBalance) {
-      // Sell tab - show token balance
+    if (currentTabTrade === 'trade' && currentPrice && currentPrice > BigInt(0) && userQuoteBalance) {
+      const spendable = (userQuoteBalance * BigInt(95)) / BigInt(100);
+      const maxTokens = (spendable * BigInt('1000000000000000000')) / currentPrice;
+      setTradeAmount(formatBigIntWithDecimals(maxTokens, DECIMALS, 4));
+      return;
+    }
+    if (userTokenBalance) {
       setTradeAmount(formatBigIntWithDecimals(userTokenBalance, DECIMALS, 6));
     }
   };
@@ -425,7 +422,7 @@ export default function DN404DetailsSummary({
     carousel1.current?.slickGoTo(currentIndex);
   }, [currentIndex]);
 
-  const tokenSymbol = product.name.split(' ')[0].toUpperCase();
+  const tokenSymbol = (product.symbol || product.name.split(' ')[0] || 'TOKEN').toUpperCase();
   
   const TABS = [
     {
@@ -442,9 +439,9 @@ export default function DN404DetailsSummary({
                 <Button 
                   color="inherit" 
                   size="small"
-                  onClick={() => window.open('https://app.avnu.fi', '_blank')}
+                  onClick={() => window.open('https://dex.botchain.ai/swap', '_blank')}
                 >
-                  DEX&apos;e Git
+                  Trade on DEX
                 </Button>
               }
             >
@@ -466,11 +463,11 @@ export default function DN404DetailsSummary({
           <Stack spacing={0.5}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography variant="subtitle2">
-                {tokenSymbol} / STRK
+                {tokenSymbol} / BOT
               </Typography>
               {currentPrice !== undefined && currentPrice !== null && (
                 <Typography variant="caption" color="text.secondary">
-                  Price: {formatBigIntWithDecimals(currentPrice, DECIMALS, 8)} STRK
+                  Price: {formatBigIntWithDecimals(currentPrice, DECIMALS, 8)} BOT
                 </Typography>
               )}
             </Stack>
@@ -483,7 +480,7 @@ export default function DN404DetailsSummary({
                 sx={{ textAlign: 'right', color: 'text.secondary', cursor: 'pointer' }}
                 onClick={handleMaxClick}
               >
-                STRK Balance: {tradingEnabled && userQuoteBalance 
+                BOT Balance: {tradingEnabled && userQuoteBalance 
                   ? formatBigIntWithDecimals(userQuoteBalance, DECIMALS, 4) 
                   : '0.00'}
               </Typography>
@@ -534,7 +531,7 @@ export default function DN404DetailsSummary({
                 size="small"
                 type="text"
                 value={calculatedValue ? formatBigIntWithDecimals(calculatedValue, DECIMALS, 6) : ''}
-                label="Cost (STRK)"
+                label="Cost (BOT)"
                 placeholder="0"
                 disabled
                 InputProps={{
@@ -604,15 +601,33 @@ export default function DN404DetailsSummary({
           <Stack direction="row" spacing={2} sx={{ pt: 2 }}>
             <Button
               fullWidth
-              disabled={isBuyDisabled}
+              disabled={isConnected ? isBuyDisabled : false}
               size="large"
               color="success"
               variant="contained"
-              onClick={tradingEnabled ? handleBuy : handleAddCart}
+              onClick={async () => {
+                if (!isConnected) {
+                  try {
+                    await connect();
+                  } catch (err) {
+                    console.error(err);
+                  }
+                  return;
+                }
+                if (tradingEnabled) {
+                  handleBuy();
+                } else {
+                  handleAddCart();
+                }
+              }}
               sx={{ whiteSpace: 'nowrap' }}
               startIcon={isBuying && <CircularProgress size={16} color="inherit" />}
             >
-              {isBuying ? 'Buying...' : 'Buy'}
+              {(() => {
+                if (isBuying) return 'Buying...';
+                if (!isConnected) return 'Connect Wallet';
+                return 'Buy';
+              })()}
             </Button>
 
             <Button 
@@ -620,113 +635,16 @@ export default function DN404DetailsSummary({
               color="error" 
               size="large" 
               variant="contained"
-              disabled={isSellDisabled}
+              disabled={!isConnected || isSellDisabled}
               onClick={tradingEnabled ? handleSell : undefined}
               startIcon={isSelling && <CircularProgress size={16} color="inherit" />}
             >
               {(() => {
                 if (isSelling) return 'Selling...';
+                if (!isConnected) return 'Sell';
                 if (isSellDisabled && tradingEnabled) return 'No Balance';
                 return 'Sell';
               })()}
-            </Button>
-          </Stack>
-        </Stack>
-      ),
-    },
-    {
-      value: 'derivative',
-      label: `Derivative`,
-      component: (
-        <Stack>
-          <Stack spacing={0.5}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Typography variant="subtitle2">
-                {product.name.split(' ')[0].toUpperCase()} / STRK
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={Number(Math.random().toFixed(2)) * 100}
-                sx={{
-                  mx: 2,
-                  flexGrow: 1,
-                  mr: 0.5,
-                }}
-              />
-            </Stack>
-
-            <Stack spacing={1}>
-              <Typography
-                variant="caption"
-                component="div"
-                sx={{ textAlign: 'right', color: 'text.secondary', cursor: 'pointer' }}
-              >
-                STRK Balance: 0.00
-              </Typography>
-              <RHFTextField
-                size="small"
-                type="number"
-                name={`items[${0}].price`}
-                value={0.001}
-                label="STRK amount"
-                placeholder="0"
-                onChange={(event) => {}}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">-</InputAdornment>,
-                }}
-                sx={{ width: '100%' }}
-              />
-            </Stack>
-          </Stack>
-          <Grid container spacing={2} sx={{pt:2}}>
-            <Grid item xs={12} md={6}>
-              <AppWidgetSummary
-                title="Bullish pool"
-                percent={2.6}
-                total={1865}
-                chart={{
-                  colors: [theme.palette.primary.main],
-                  series: [5, 18, 12, 51, 68, 11, 39, 37, 27, 20],
-                }}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <AppWidgetSummary
-                title="Bearish pool"
-                percent={-1.2}
-                total={487}
-                chart={{
-                  colors: [theme.palette.error.main],
-                  series: [20, 41, 63, 33, 28, 35, 50, 46, 11, 26],
-                }}
-              />
-            </Grid>
-          </Grid>
-
-          <Stack direction="row" spacing={2} sx={{ pt: 2 }}>
-            <Button
-              fullWidth
-              disabled={isMaxQuantity}
-              size="large"
-              color="success"
-              variant="contained"
-              onClick={handleAddCart}
-              sx={{ whiteSpace: 'nowrap' }}
-              endIcon="⇡"
-            >
-              Bullish
-            </Button>
-
-            <Button
-              endIcon="⇣"
-              fullWidth
-              color="error"
-              size="large"
-              type="submit"
-              variant="contained"
-            >
-              Bearish
             </Button>
           </Stack>
         </Stack>
@@ -784,10 +702,10 @@ export default function DN404DetailsSummary({
             {name}{' '}
             <Label
               variant="soft"
-              color={inventoryType === 'In progress' ? 'success' : 'error'}
+              color={isMigrated ? 'success' : 'primary'}
               sx={{ textTransform: 'uppercase', mr: 'auto' }}
             >
-              {sentenceCase('In progress')}
+              {sentenceCase(inventoryType || 'In progress')}
             </Label>
           </Typography>
           {isDesktop ? (

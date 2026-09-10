@@ -65,20 +65,20 @@ const navConfig = [
   // MANAGEMENT
   // ----------------------------------------------------------------------
   {
-    subheader: '👻 Privacy Trading',
+    subheader: 'Launchpad',
     items: [
-      // USER
-      // { title: 'wallet', icon: ICONS.user, path: PATH_DASHBOARD.user.profile },
       {
-        title: '🔥 Top Private Launches',
+        title: 'Top Launches',
         path: PATH_DASHBOARD.dn404.root,
         icon: ICONS.menuItem,
-        caption: 'Explore untraceable memecoin launches with complete privacy and zero wallet linkability.',
+        caption: 'Browse live memecoin launches on BOT Chain.',
       },
-      // INVOICE
-
-      // BLOG
-      { title: '🚀 Launch Private Memecoin', icon: ICONS.label, path: PATH_DASHBOARD.createDn404.create, caption: DN404_DEFINE},
+      {
+        title: 'Launch Memecoin',
+        icon: ICONS.label,
+        path: PATH_DASHBOARD.createDn404.create,
+        caption: DN404_DEFINE,
+      },
       {
         title: '📚 Documentation',
         path: 'https://github.com/AjnasNB/zump.fun',

@@ -1,0 +1,8 @@
+{
+  "pumpFactory": "0x9C27B5d31e48a9a477283D6BE344A6c49441Cc66",
+  "tokenImplementation": "0x407D29Cd0fc3663fc934aBe318d818BB3115b307",
+  "chainId": 677,
+  "rpc": "https://rpc.botchain.ai",
+  "explorer": "https://scan.botchain.ai",
+  "deployTx": "0xc94221fc530c8bf994c3af69706a63cdd2fad36554a6e920ce2e1303d8ec80d9"
+}

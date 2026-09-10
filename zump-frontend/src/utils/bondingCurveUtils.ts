@@ -52,8 +52,7 @@ export const calculatePrice = (
   const s = BigInt(slope);
   const sold = BigInt(tokensSold);
   
-  // price = base_price + (slope × tokens_sold)
-  return base + s * sold;
+  return base + (s * sold) / BigInt('1000000000000000000');
 };
 
 // ============================================================================
@@ -121,7 +120,7 @@ export const calculateMarketCap = (
   currentPrice: bigint,
   tokensSold: bigint
 ): bigint => {
-  return BigInt(currentPrice) * BigInt(tokensSold);
+  return (BigInt(currentPrice) * BigInt(tokensSold)) / BigInt('1000000000000000000');
 };
 
 // ============================================================================

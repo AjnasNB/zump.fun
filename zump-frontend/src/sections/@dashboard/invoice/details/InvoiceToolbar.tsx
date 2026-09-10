@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PDFDownloadLink, PDFViewer } from '@react-pdf/renderer';
-import { useAccount } from '@starknet-react/core';
+import { useAccount } from 'src/providers/BotChainProvider';
 import { useNavigate } from 'react-router-dom';
 // @mui
 import {

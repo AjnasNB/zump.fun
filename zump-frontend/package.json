@@ -2,7 +2,7 @@
   "name": "zump-fun-frontend",
   "author": "Zump.fun Team",
   "version": "1.0.0",
-  "description": "Zump.fun - First Private Memecoin Launchpad on Starknet. Trade like a ghost with zero-knowledge privacy.",
+  "description": "Zump.fun - Memecoin launchpad on BOT Chain.",
   "private": true,
   "scripts": {
     "postinstall": "node scripts/patch-import-attributes.js",
@@ -20,7 +20,10 @@
   "eslintConfig": {
     "extends": [
       "react-app"
-    ]
+    ],
+    "rules": {
+      "import/no-extraneous-dependencies": "off"
+    }
   },
   "browserslist": {
     "production": [
@@ -49,7 +52,7 @@
     "@hello-pangea/dnd": "^16.1.0",
     "@hookform/resolvers": "^2.9.10",
     "@iconify/react": "^4.0.0",
-    "@mui/icons-material": "^7.3.5",
+    "@mui/icons-material": "^7.3.6",
     "@mui/lab": "^5.0.0-alpha.109",
     "@mui/material": "^5.10.15",
     "@mui/system": "^5.10.15",
@@ -57,9 +60,9 @@
     "@mui/x-date-pickers": "^5.0.9",
     "@react-pdf/renderer": "^3.4.4",
     "@reduxjs/toolkit": "^1.9.0",
-    "@starknet-react/chains": "^3.1.1",
-    "@starknet-react/core": "^3.7.2",
-    "@supabase/supabase-js": "^2.86.0",
+    "@starknet-react/chains": "^3.1.3",
+    "@starknet-react/core": "^3.7.4",
+    "@supabase/supabase-js": "^2.86.2",
     "@tanstack/react-query": "^5.51.23",
     "amazon-cognito-identity-js": "^6.0.1",
     "apexcharts": "^3.36.3",
@@ -67,6 +70,7 @@
     "axios": "^1.2.0",
     "change-case": "^4.1.2",
     "date-fns": "^2.29.3",
+    "ethers": "^5.7.2",
     "firebase": "^9.14.0",
     "framer-motion": "^7.6.12",
     "highlight.js": "^11.7.0",

@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import {Helmet} from 'react-helmet-async';
 import {useParams, useLocation} from 'react-router-dom';
 // @mui
-import {Box,Card,Container,Divider,Grid,Stack,Tab,Tabs,Typography,LinearProgress,Alert,Chip} from '@mui/material';
+import {Box,Card,Container,Divider,Grid,Link,Stack,Tab,Tabs,Typography,LinearProgress,Alert,Chip} from '@mui/material';
 import {alpha} from '@mui/material/styles';
 // redux
 import {Notpump_DN404} from 'src/descriptions/DN404';
@@ -12,6 +12,8 @@ import {useDispatch,useSelector} from '../../redux/store';
 import { useTokenDetail } from '../../hooks/useTokenDetail';
 // utils
 import { formatBigIntWithDecimals } from '../../utils/bondingCurveUtils';
+import { formatAddress } from '../../utils/formatAddress';
+import { explorerAddress } from '../../config/contracts';
 // routes
 // @types
 import {ICheckoutCartItem} from '../../@types/DN404';
@@ -61,29 +63,29 @@ export default function DN404DetailsPage() {
 
   const dispatch = useDispatch();
 
-  const { product, isLoading: reduxLoading, checkout } = useSelector((state) => state.product);
+  const { product, isLoading: reduxLoading, error: reduxError, checkout } = useSelector((state) => state.product);
 
   const [currentTab, setCurrentTab] = useState('trade_history');
 
-  // Extract token and pool addresses from URL state or product
-  const tokenAddress = (location.state as any)?.tokenAddress || product?.contract;
-  const poolAddress = (location.state as any)?.poolAddress || product?.poolAddress;
+  const routeToken =
+    (location.state as any)?.tokenAddress ||
+    (location.state as any)?.poolAddress ||
+    product?.contract ||
+    product?.poolAddress;
 
-  // Fetch on-chain token detail
-  // Requirements: 4.1, 4.2, 4.3
-  const { 
-    token: onChainToken, 
-    poolState, 
-    isLoading: onChainLoading, 
+  const {
+    token: onChainToken,
     error: onChainError,
-    refetch: refetchOnChain 
-  } = useTokenDetail(tokenAddress, poolAddress, {
-    autoFetch: Boolean(tokenAddress && poolAddress),
-    pollingInterval: 10000, // Poll every 10 seconds for price updates
+    refetch: refetchOnChain,
+  } = useTokenDetail(routeToken, routeToken, {
+    autoFetch: Boolean(routeToken),
+    pollingInterval: 10000,
   });
 
-  // Combined loading state
-  const isLoading = reduxLoading || onChainLoading;
+  const tokenAddress = onChainToken?.tokenAddress || routeToken;
+  const poolAddress = onChainToken?.poolAddress || tokenAddress;
+
+  const isLoading = reduxLoading && !product;
 
   useEffect(() => {
     if (name) {
@@ -100,10 +102,34 @@ export default function DN404DetailsPage() {
   };
 
   // Use on-chain data if available, otherwise fall back to Redux product
-  const displayName = onChainToken?.name || product?.name || 'Unknown Token';
-  const displaySymbol = onChainToken?.symbol || product?.symbol || '???';
-  const displayDescription = onChainToken?.description || product?.description || '';
+  const displayName =
+    onChainToken?.name && onChainToken.name !== 'Unknown Token'
+      ? onChainToken.name
+      : product?.name || 'Token';
+  const displaySymbol =
+    onChainToken?.symbol && onChainToken.symbol !== '???'
+      ? onChainToken.symbol
+      : product?.symbol || '';
+  const displayDescription =
+    onChainToken?.description || product?.description || 'No description has been published for this token.';
   const isMigrated = onChainToken?.migrated || product?.isMigrated || false;
+  const creatorAddress = onChainToken?.creatorAddress || product?.wallet;
+  const creatorIsUnknown =
+    !creatorAddress ||
+    creatorAddress === '0x0' ||
+    creatorAddress.toLowerCase() === '0x0000000000000000000000000000000000000000';
+
+  const resolvedProduct = product
+    ? {
+        ...product,
+        name: displayName,
+        symbol: displaySymbol || product.symbol,
+        wallet: creatorIsUnknown ? product.wallet : creatorAddress,
+        contract: tokenAddress || product.contract,
+        poolAddress: poolAddress || product.poolAddress,
+        description: displayDescription,
+      }
+    : null;
   const progress = onChainToken?.progress || product?.bondingCurveProccess || 0;
   const currentPrice = onChainToken?.currentPrice;
   const tokensSold = onChainToken?.tokensSold;
@@ -113,7 +139,7 @@ export default function DN404DetailsPage() {
     {
       value: 'trade_history',
       label: `Trade history`,
-      component: product ? <DN404TradeHistory /> : null,
+      component: tokenAddress ? <DN404TradeHistory poolAddress={tokenAddress} /> : null,
     },
     {
       value: 'description',
@@ -160,7 +186,7 @@ export default function DN404DetailsPage() {
                 size="small" 
                 onClick={() => {
                   // TODO: Redirect to DEX
-                  window.open('https://app.avnu.fi', '_blank');
+                  window.open('https://dex.botchain.ai/swap', '_blank');
                 }}
               />
             }
@@ -169,11 +195,11 @@ export default function DN404DetailsPage() {
           </Alert>
         )}
 
-        {product && (
+        {resolvedProduct && (
           <>
             <Grid container spacing={3}>
               <Grid item xs={12} md={6} lg={7}>
-                <DN404DetailsCarousel product={product} />
+                <DN404DetailsCarousel product={resolvedProduct} livePrice={currentPrice} />
                 
                 {/* On-chain Pool State Card - Requirements: 4.1, 4.2, 4.3 */}
                 {onChainToken && (
@@ -224,7 +250,7 @@ export default function DN404DetailsPage() {
                             Current Price
                           </Typography>
                           <Typography variant="h6">
-                            {currentPrice ? formatBigIntWithDecimals(currentPrice, 18, 6) : '0'} ETH
+                            {currentPrice ? formatBigIntWithDecimals(currentPrice, 18, 6) : '0'} BOT
                           </Typography>
                         </Box>
                       </Grid>
@@ -236,7 +262,7 @@ export default function DN404DetailsPage() {
                             Market Cap
                           </Typography>
                           <Typography variant="h6">
-                            {onChainToken.marketCap ? formatBigIntWithDecimals(onChainToken.marketCap, 36, 4) : '0'} ETH
+                            {onChainToken.marketCap ? formatBigIntWithDecimals(onChainToken.marketCap, 18, 4) : '0'} BOT
                           </Typography>
                         </Box>
                       </Grid>
@@ -248,7 +274,7 @@ export default function DN404DetailsPage() {
                             Pool Reserve
                           </Typography>
                           <Typography variant="h6">
-                            {onChainToken.reserveBalance ? formatBigIntWithDecimals(onChainToken.reserveBalance, 18, 4) : '0'} ETH
+                            {onChainToken.reserveBalance ? formatBigIntWithDecimals(onChainToken.reserveBalance, 18, 4) : '0'} BOT
                           </Typography>
                         </Box>
                       </Grid>
@@ -277,10 +303,23 @@ export default function DN404DetailsPage() {
                         Token Contract
                       </Typography>
                       <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                        {tokenAddress || 'Unknown'}
+                        {tokenAddress ? (
+                          <Link href={explorerAddress(tokenAddress)} target="_blank" rel="noopener" color="inherit">
+                            {tokenAddress}
+                          </Link>
+                        ) : (
+                          'Unknown'
+                        )}
                       </Typography>
                       <Typography variant="caption" color="text.disabled" sx={{ mt: 0.5, display: 'block' }}>
-                        🔒 Creator identity is privacy-preserved
+                        Creator:{' '}
+                        {creatorIsUnknown ? (
+                          'Unknown'
+                        ) : (
+                          <Link href={explorerAddress(creatorAddress)} target="_blank" rel="noopener" color="inherit">
+                            {formatAddress(creatorAddress)}
+                          </Link>
+                        )}
                       </Typography>
                     </Box>
                   </Card>
@@ -289,11 +328,10 @@ export default function DN404DetailsPage() {
 
               <Grid item xs={12} md={6} lg={5}>
                 <DN404DetailsSummary
-                  product={product}
+                  product={resolvedProduct}
                   cart={checkout.cart}
                   onAddCart={handleAddCart}
                   onGotoStep={handleGotoStep}
-                  // On-chain trading props - Requirements: 5.3, 6.3, 6.4
                   poolAddress={poolAddress}
                   tokenAddress={tokenAddress}
                   currentPrice={currentPrice}
@@ -348,6 +386,12 @@ export default function DN404DetailsPage() {
         )}
 
         {isLoading && <SkeletonProductDetails />}
+
+        {!isLoading && !resolvedProduct && (
+          <Alert severity="error">
+            {reduxError ? String((reduxError as any)?.message || reduxError) : 'Token not found on BOT Chain.'}
+          </Alert>
+        )}
       </Container>
     </>
   );

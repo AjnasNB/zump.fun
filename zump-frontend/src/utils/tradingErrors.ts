@@ -25,19 +25,15 @@ export interface RecoveryOption {
 
 export const ERROR_MESSAGES: Record<string, string> = {
   // Balance errors - Requirements: 5.5
-  'INSUFFICIENT_BALANCE': 'Yetersiz bakiye. Lütfen bakiyenizi kontrol edin.',
-  'INSUFFICIENT_QUOTE_BALANCE': 'Yetersiz ETH bakiyesi. Lütfen cüzdanınıza ETH ekleyin.',
-  'INSUFFICIENT_TOKEN_BALANCE': 'Yetersiz token bakiyesi. Satmak için yeterli tokenınız yok.',
-  
-  // Pool errors - Requirements: 6.5
-  'INSUFFICIENT_RESERVE': 'Havuzda yeterli likidite yok.',
-  'ALREADY_MIGRATED': 'Bu havuz DEX\'e taşınmış. Lütfen DEX üzerinden işlem yapın.',
-  'MAX_SUPPLY_REACHED': 'Maksimum arz limitine ulaşıldı.',
-  'INSUFFICIENT_TOKENS_SOLD': 'Satılabilecek yeterli token yok.',
-  
-  // Authorization errors
-  'NOT_AUTHORIZED': 'Bu işlem için yetkiniz yok.',
-  'ACCOUNT_NOT_CONNECTED': 'Lütfen cüzdanınızı bağlayın.',
+  'INSUFFICIENT_BALANCE': 'Insufficient balance.',
+  'INSUFFICIENT_QUOTE_BALANCE': 'Insufficient BOT balance.',
+  'INSUFFICIENT_TOKEN_BALANCE': 'Insufficient token balance.',
+  'INSUFFICIENT_RESERVE': 'Not enough liquidity in the curve.',
+  'ALREADY_MIGRATED': 'This launch has already migrated.',
+  'MAX_SUPPLY_REACHED': 'Max supply reached.',
+  'INSUFFICIENT_TOKENS_SOLD': 'Not enough tokens sold to sell back.',
+  'NOT_AUTHORIZED': 'Not authorized.',
+  'ACCOUNT_NOT_CONNECTED': 'Connect your wallet first.',
   
   // Transaction errors
   'INVALID_AMOUNT': 'Geçersiz miktar. Lütfen pozitif bir değer girin.',

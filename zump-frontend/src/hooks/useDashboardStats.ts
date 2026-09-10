@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getSupabaseClient, isSupabaseConfigured } from '../config/supabase';
 import { TokenMetadata, TradeEvent } from '../@types/supabase';
+import { getContractService } from '../services/contractService';
 
 // ===========================================
 // Types
@@ -113,79 +114,6 @@ const DEFAULT_STATS: DashboardStats = {
   trendingTokens: [],
 };
 
-// Demo data for development/testing when no real data exists
-const DEMO_STATS: DashboardStats = {
-  totalActiveUsers: 156,
-  totalTradesVolume: 24580,
-  totalDerivativeVolume: 0,
-  totalValueLock: 12450,
-  totalTokens: 8,
-  
-  activeUsersChange: 12.5,
-  tradesVolumeChange: 8.3,
-  derivativeVolumeChange: 0,
-  valueLockChange: 15.2,
-  
-  activeUsersChart: [12, 28, 35, 42, 55, 48, 62, 78, 95, 156],
-  tradesVolumeChart: [1200, 2400, 3100, 4500, 5200, 8900, 12000, 15600, 19800, 24580],
-  derivativeVolumeChart: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  valueLockChart: [800, 1500, 2200, 3400, 4800, 6200, 7900, 9500, 11200, 12450],
-  
-  volumeBreakdown: [
-    { label: 'Buy', value: 14580 },
-    { label: 'Sell', value: 10000 },
-    { label: 'Bullish', value: 8750 },
-    { label: 'Bearish', value: 6000 },
-  ],
-  
-  longShortRatio: {
-    categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed'],
-    longRatio: [0.45, 0.52, 0.58, 0.61, 0.55, 0.63, 0.68, 0.72, 0.65, 0.59],
-    shortRatio: [0.55, 0.48, 0.42, 0.39, 0.45, 0.37, 0.32, 0.28, 0.35, 0.41],
-  },
-  
-  topRegions: [
-    { label: 'Privacy Trades', value: 14580 },
-    { label: 'Public Trades', value: 10000 },
-  ],
-  
-  trendingTokens: [
-    {
-      id: '1',
-      name: 'Ghost Coin',
-      symbol: 'GHOST',
-      imageUrl: null,
-      tokenAddress: '0x123...abc',
-      poolAddress: '0x456...def',
-      volume24h: 5420,
-      priceChange24h: 24.5,
-      trades24h: 156,
-    },
-    {
-      id: '2',
-      name: 'Phantom Token',
-      symbol: 'PHTM',
-      imageUrl: null,
-      tokenAddress: '0x789...ghi',
-      poolAddress: '0xabc...jkl',
-      volume24h: 3250,
-      priceChange24h: -8.2,
-      trades24h: 89,
-    },
-    {
-      id: '3',
-      name: 'Shadow Meme',
-      symbol: 'SHDW',
-      imageUrl: null,
-      tokenAddress: '0xdef...mno',
-      poolAddress: '0xpqr...stu',
-      volume24h: 2100,
-      priceChange24h: 15.7,
-      trades24h: 67,
-    },
-  ],
-};
-
 // ===========================================
 // Hook Implementation
 // ===========================================
@@ -198,18 +126,38 @@ export function useDashboardStats(autoRefreshMs?: number): UseDashboardStatsRetu
   const isSupabaseAvailable = isSupabaseConfigured();
   
   const fetchStats = useCallback(async () => {
-    if (!isSupabaseAvailable) {
-      // Return demo stats when Supabase is not configured
-      // This allows the dashboard to show sample data during development
-      setStats(DEMO_STATS);
-      setIsLoading(false);
-      return;
-    }
-    
     setIsLoading(true);
     setError(null);
-    
+
     try {
+      let onChainLaunchCount = 0;
+      let onChainTrending: TrendingToken[] = [];
+      try {
+        const launches = await getContractService().getAllLaunches();
+        onChainLaunchCount = launches.length;
+        onChainTrending = launches.map((launch) => ({
+          id: launch.token,
+          name: launch.name,
+          symbol: launch.symbol,
+          imageUrl: null,
+          tokenAddress: launch.token,
+          poolAddress: launch.pool,
+          volume24h: 0,
+          priceChange24h: 0,
+          trades24h: 0,
+        }));
+      } catch (err) {
+        console.warn('Failed to fetch on-chain launches for dashboard:', err);
+      }
+
+      if (!isSupabaseAvailable) {
+        setStats({
+          ...DEFAULT_STATS,
+          totalTokens: onChainLaunchCount,
+          trendingTokens: onChainTrending,
+        });
+        return;
+      }
       const client = getSupabaseClient();
       
       // Fetch all data in parallel
@@ -232,8 +180,8 @@ export function useDashboardStats(autoRefreshMs?: number): UseDashboardStatsRetu
       const tokens = (tokensResult.data || []) as TokenMetadata[];
       const allTrades = (tradesResult.data || []) as TradeEvent[];
       const recentTrades = (recentTradesResult.data || []) as TradeEvent[];
-      
-      // Calculate unique active users
+
+      // Unique traders from recorded events
       const uniqueTraders = new Set(allTrades.map(t => t.trader));
       const totalActiveUsers = uniqueTraders.size;
       
@@ -254,23 +202,25 @@ export function useDashboardStats(autoRefreshMs?: number): UseDashboardStatsRetu
       const dailyData = generateDailyData(recentTrades);
       
       // Calculate trending tokens (by 24h volume)
-      const trendingTokens = await calculateTrendingTokens(client, tokens, allTrades);
+      const supabaseTrending = await calculateTrendingTokens(client, tokens, allTrades);
+      const trendingTokens = supabaseTrending.some((t) => t.trades24h > 0 || t.volume24h > 0)
+        ? supabaseTrending
+        : onChainTrending;
       
       // Calculate percentage changes (last 24h vs previous 24h)
       const changes = calculateChanges(allTrades);
       
-      // If no data exists yet, show demo stats
-      if (tokens.length === 0 && allTrades.length === 0) {
-        setStats(DEMO_STATS);
+      if (tokens.length === 0 && allTrades.length === 0 && onChainLaunchCount === 0) {
+        setStats(DEFAULT_STATS);
         return;
       }
       
       setStats({
         totalActiveUsers,
         totalTradesVolume: Math.round(totalTradesVolume / 1e18), // Convert from wei
-        totalDerivativeVolume: 0, // No derivatives yet
+        totalDerivativeVolume: 0,
         totalValueLock: Math.round((buyVolume - sellVolume) / 1e18),
-        totalTokens: tokens.length,
+        totalTokens: Math.max(tokens.length, onChainLaunchCount),
         
         activeUsersChange: changes.usersChange,
         tradesVolumeChange: changes.volumeChange,
@@ -285,8 +235,6 @@ export function useDashboardStats(autoRefreshMs?: number): UseDashboardStatsRetu
         volumeBreakdown: [
           { label: 'Buy', value: Math.round(buyVolume / 1e18) },
           { label: 'Sell', value: Math.round(sellVolume / 1e18) },
-          { label: 'Bullish', value: Math.round(buyVolume * 0.6 / 1e18) },
-          { label: 'Bearish', value: Math.round(sellVolume * 0.4 / 1e18) },
         ],
         
         longShortRatio: {
@@ -305,8 +253,7 @@ export function useDashboardStats(autoRefreshMs?: number): UseDashboardStatsRetu
     } catch (err: any) {
       console.error('Failed to fetch dashboard stats:', err);
       setError(err?.message || 'Failed to fetch stats');
-      // Fall back to demo stats on error
-      setStats(DEMO_STATS);
+      setStats(DEFAULT_STATS);
     } finally {
       setIsLoading(false);
     }

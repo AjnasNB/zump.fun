@@ -1,20 +1,16 @@
-// @mui
 import { Card, CardProps, Typography, Box, Stack, CircularProgress } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 import { useMemo, useEffect, useState } from 'react';
-// components
 import Chart, { useChart } from '../../../../components/chart';
-// services
 import { getSupabaseService } from '../../../../services/supabaseService';
 import { TradeEvent } from '../../../../@types/supabase';
-
-// ----------------------------------------------------------------------
 
 interface Props extends CardProps {
   height?: number;
   tokenSymbol?: string;
   tokenAddress?: string;
   poolAddress?: string;
+  livePrice?: bigint;
 }
 
 interface PricePoint {
@@ -22,106 +18,91 @@ interface PricePoint {
   price: number;
 }
 
-// Generate mock price data for demo when no real data exists
-function generateMockPriceData(basePrice: number = 0.0001, points: number = 50): number[] {
-  const data: number[] = [];
-  let price = basePrice;
-  
-  for (let i = 0; i < points; i += 1) {
-    const change = (Math.random() - 0.48) * basePrice * 0.1;
-    price = Math.max(basePrice * 0.5, price + change);
-    data.push(price);
-  }
-  
-  return data;
+function toBot(value?: bigint): number {
+  if (value === undefined) return 0;
+  return Number(value) / 1e18;
 }
 
-export default function DN404CandleChart({ 
-  height, 
+export default function DN404CandleChart({
+  height,
   tokenSymbol = 'TOKEN',
   tokenAddress,
   poolAddress,
+  livePrice,
 }: Props) {
   const theme = useTheme();
   const [priceHistory, setPriceHistory] = useState<PricePoint[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasRealData, setHasRealData] = useState(false);
-  
-  // Fetch trade history from Supabase
+  const [hasTradeData, setHasTradeData] = useState(false);
+
+  const livePriceBot = toBot(livePrice);
+
   useEffect(() => {
     const fetchTradeHistory = async () => {
       if (!tokenAddress && !poolAddress) return;
-      
+
       setIsLoading(true);
       try {
         const supabaseService = getSupabaseService();
         const trades = await supabaseService.getTradeHistory({
-          poolAddress,
+          poolAddress: poolAddress || tokenAddress,
           limit: 100,
         });
-        
+
         if (trades.length > 0) {
-          // Convert trades to price points
           const points: PricePoint[] = trades
-            .filter((t: TradeEvent) => t.price && t.created_at)
+            .filter((t: TradeEvent) => t.price)
             .map((t: TradeEvent) => ({
-              timestamp: new Date(t.created_at!).getTime(),
-              price: Number(t.price) / 1e18, // Convert from wei
+              timestamp: new Date(t.timestamp || t.created_at || Date.now()).getTime(),
+              price: Number(t.price) / 1e18,
             }))
             .sort((a: PricePoint, b: PricePoint) => a.timestamp - b.timestamp);
-          
+
           setPriceHistory(points);
-          setHasRealData(points.length > 0);
+          setHasTradeData(points.length > 0);
         } else {
-          setHasRealData(false);
+          setPriceHistory([]);
+          setHasTradeData(false);
         }
       } catch (error) {
         console.error('Failed to fetch trade history:', error);
-        setHasRealData(false);
+        setHasTradeData(false);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchTradeHistory();
   }, [tokenAddress, poolAddress]);
-  
-  // Use real data or generate mock data
+
   const chartData = useMemo(() => {
-    if (hasRealData && priceHistory.length > 0) {
-      return priceHistory.map(p => p.price);
+    if (hasTradeData && priceHistory.length > 0) {
+      return priceHistory.map((p) => p.price);
     }
-    return generateMockPriceData();
-  }, [hasRealData, priceHistory]);
-  
-  // Calculate price change
+    if (livePriceBot > 0) {
+      return [livePriceBot, livePriceBot];
+    }
+    return [];
+  }, [hasTradeData, priceHistory, livePriceBot]);
+
   const priceChange = useMemo(() => {
-    if (chartData.length < 2) return 0;
+    if (chartData.length < 2 || chartData[0] === 0) return 0;
     const first = chartData[0];
     const last = chartData[chartData.length - 1];
     return ((last - first) / first) * 100;
   }, [chartData]);
-  
-  const currentPrice = chartData[chartData.length - 1] || 0;
+
+  const displayedPrice = livePriceBot || chartData[chartData.length - 1] || 0;
   const isPositive = priceChange >= 0;
-  
+
   const chartOptions = useChart({
     chart: {
       type: 'area',
-      sparkline: {
-        enabled: false,
-      },
-      toolbar: {
-        show: false,
-      },
-      zoom: {
-        enabled: false,
-      },
+      sparkline: { enabled: false },
+      toolbar: { show: false },
+      zoom: { enabled: false },
     },
-    stroke: {
-      width: 2,
-      curve: 'smooth',
-    },
+    stroke: { width: 2, curve: 'smooth' },
     fill: {
       type: 'gradient',
       gradient: {
@@ -133,15 +114,9 @@ export default function DN404CandleChart({
     },
     colors: [isPositive ? theme.palette.success.main : theme.palette.error.main],
     xaxis: {
-      labels: {
-        show: false,
-      },
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
-      },
+      labels: { show: false },
+      axisBorder: { show: false },
+      axisTicks: { show: false },
     },
     yaxis: {
       labels: {
@@ -152,6 +127,8 @@ export default function DN404CandleChart({
           fontSize: '10px',
         },
       },
+      min: displayedPrice > 0 ? displayedPrice * 0.95 : undefined,
+      max: displayedPrice > 0 ? displayedPrice * 1.05 : undefined,
     },
     grid: {
       show: true,
@@ -161,10 +138,8 @@ export default function DN404CandleChart({
     tooltip: {
       enabled: true,
       y: {
-        formatter: (value: number) => `${value.toFixed(8)} STRK`,
-        title: {
-          formatter: () => 'Price:',
-        },
+        formatter: (value: number) => `${value.toFixed(8)} BOT`,
+        title: { formatter: () => 'Price:' },
       },
     },
   });
@@ -180,53 +155,33 @@ export default function DN404CandleChart({
   return (
     <Card sx={{ p: 2, height: height || '100%' }}>
       <Stack spacing={1}>
-        {/* Header */}
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="subtitle2">
-            {tokenSymbol} / STRK
-          </Typography>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                color: isPositive ? 'success.main' : 'error.main',
-                fontWeight: 'bold',
-              }}
-            >
-              {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {hasRealData ? '24h' : 'demo'}
-            </Typography>
-          </Stack>
-        </Stack>
-        
-        {/* Current Price */}
-        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-          {currentPrice.toFixed(8)} STRK
-        </Typography>
-        
-        {/* Chart */}
-        <Box sx={{ height: height ? height - 100 : 200 }}>
-          <Chart
-            type="area"
-            series={[{ name: 'Price', data: chartData }]}
-            options={chartOptions}
-            height="100%"
-          />
-        </Box>
-        
-        {/* Footer */}
-        <Stack direction="row" justifyContent="space-between">
+          <Typography variant="subtitle2">{tokenSymbol} / BOT</Typography>
           <Typography variant="caption" color="text.secondary">
-            {hasRealData ? `${priceHistory.length} trades` : 'No trades yet (demo data)'}
+            {hasTradeData ? `${priceHistory.length} trades` : 'Live price'}
           </Typography>
-          {!hasRealData && (
-            <Typography variant="caption" sx={{ color: 'warning.main' }}>
-              Be the first to trade!
-            </Typography>
-          )}
         </Stack>
+
+        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          {displayedPrice.toFixed(8)} BOT
+        </Typography>
+
+        <Box sx={{ height: height ? height - 100 : 200 }}>
+          {chartData.length > 0 ? (
+            <Chart
+              type="area"
+              series={[{ name: 'Price', data: chartData }]}
+              options={chartOptions}
+              height="100%"
+            />
+          ) : (
+            <Stack height="100%" alignItems="center" justifyContent="center">
+              <Typography variant="body2" color="text.secondary">
+                Price will appear after the first trade.
+              </Typography>
+            </Stack>
+          )}
+        </Box>
       </Stack>
     </Card>
   );

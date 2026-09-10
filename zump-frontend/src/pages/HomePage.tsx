@@ -49,7 +49,7 @@ export default function HomePage() {
   return (
     <>
       <Helmet>
-        <title>Memecoin Launchpad on StarkNet | Zump.fun</title>
+        <title>Memecoin Launchpad on BOT Chain | Zump.fun</title>
       </Helmet>
 
       {/* {progress} */}

@@ -1,30 +1,10 @@
 export const DN404_DEFINE =
-  "Zump.fun is the first untraceable, privacy-focused memecoin launchpad on Starknet. Every transaction is anonymous, unidentifiable, and unlinkable using zero-knowledge proofs, stealth addresses, and encrypted state.";
+  'Launch a memecoin on BOT Chain with a live linear bonding curve priced in native BOT.';
 
-// NOTE: On StarkNet, Zump.fun launches use private memecoin tokens with ZK-proofs
-// Each token is launched anonymously through stealth addresses with complete privacy
-export const Notpump_DN404 = `Zump.fun enables fully private memecoin launches on StarkNet with untraceable trading. ${DN404_DEFINE}`;
+export const Notpump_DN404 = `Zump.fun is a memecoin launchpad on BOT Chain. ${DN404_DEFINE}`;
 
-export const Notpump_DEFINE_FAIRLAUNCH = "When the bonding curve reaches 100% (~$69k Market Cap), liquidity is automatically deployed to DEX (JediSwap/Ekubo). Early private positions remain untraceable forever, while new traders can participate publicly.";
+export const Notpump_DEFINE_FAIRLAUNCH =
+  'Tokens trade on a linear bonding curve against native BOT. Price rises as more tokens are bought and falls as they are sold. A 1% protocol fee is taken on each trade.';
 
-// Privacy Features
-export const PRIVACY_FEATURES = {
-  stealthAddresses: "Infinite untraceable stealth accounts - each login generates a fresh sub-account",
-  zeroLinkability: "Primary wallet cannot identify stealth wallet and vice versa",
-  anonymousLaunches: "Deploy memecoins with zero identity exposure using ZK contracts",
-  privateTrading: "Buy and sell without revealing your position or wallet",
-  darkPool: "One unified DarkPool with infinite mixing for maximum privacy",
-  autoMigration: "Seamless transition to public DEX trading at threshold"
-};
-
-// Technology Stack
-export const TECH_STACK = {
-  zkContracts: "Noir zkContracts for zero-knowledge proofs",
-  proofAcceleration: "Garaga accelerated proof generation",
-  encryptedState: "Ztarknet encrypted state management",
-  nullifiers: "Nullifier-based double-spend prevention",
-  merkleTrees: "Merkle tree note storage for privacy"
-};
-
-export const WALLET = '0xDA216D50E16fBcf7AbF71A68403FcCf39Cc884e0';
-export const TX = '0xf3c8f6962bbd93a7d8ab8d7b345b217a1bc2735d3a2d99111f5cf3d2c6760109';
+export const WALLET = '0xF7249B507F1f89Eaea5d694cEf5cb96F245Bc5b6';
+export const TX = '0x4f39e105c309f0fce53e536bb2cd153e67d24b74a1f525a1041a047b276859b7';

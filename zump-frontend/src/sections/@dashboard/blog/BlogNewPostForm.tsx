@@ -382,7 +382,7 @@ export default function BlogNewPostForm() {
                 <Grid item xs={12} sm={6}>
                   <RHFTextField 
                     name="basePrice" 
-                    label="Base Price (STRK)" 
+                    label="Base Price (BOT)" 
                     type="text"
                     helperText="Starting price per token"
                   />
@@ -408,7 +408,7 @@ export default function BlogNewPostForm() {
                     name="migrationThreshold" 
                     label="Migration Threshold" 
                     type="text"
-                    helperText="Tokens sold before DEX migration"
+                    helperText="Unused. Tokens stay on the bonding curve."
                   />
                 </Grid>
               </Grid>
@@ -469,10 +469,10 @@ export default function BlogNewPostForm() {
                     Estimated Gas Cost
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Fee: {gasEstimate.estimatedFeeFormatted} STRK
+                    Fee: {gasEstimate.estimatedFeeFormatted} BOT
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Max Fee: {gasEstimate.suggestedMaxFeeFormatted} STRK
+                    Max Fee: {gasEstimate.suggestedMaxFeeFormatted} BOT
                   </Typography>
                 </Box>
               )}
@@ -700,7 +700,7 @@ export default function BlogNewPostForm() {
             </Typography>
             
             <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-              Your token <strong>{launchResult?.symbol}</strong> has been deployed on Starknet
+              Your token <strong>{launchResult?.symbol}</strong> has been deployed on BOT Chain
             </Typography>
             
             <Typography 

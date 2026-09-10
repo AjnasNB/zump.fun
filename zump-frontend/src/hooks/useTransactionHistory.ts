@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useAccount } from '@starknet-react/core';
+import { useAccount } from '../providers/BotChainProvider';
 import { PrivateTransaction } from '../@types/privacy';
 import { useStealthAddress } from './useStealthAddress';
 

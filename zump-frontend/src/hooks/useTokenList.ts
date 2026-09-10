@@ -67,7 +67,7 @@ export interface UseTokenListReturn {
  * price = base_price + (slope × tokens_sold)
  */
 export const calculatePrice = (basePrice: bigint, slope: bigint, tokensSold: bigint): bigint => {
-  return basePrice + slope * tokensSold;
+  return basePrice + (slope * tokensSold) / BigInt('1000000000000000000');
 };
 
 /**
@@ -85,7 +85,7 @@ export const calculateProgress = (tokensSold: bigint, maxSupply: bigint): number
  * marketCap = current_price × tokens_sold
  */
 export const calculateMarketCap = (currentPrice: bigint, tokensSold: bigint): bigint => {
-  return currentPrice * tokensSold;
+  return (currentPrice * tokensSold) / BigInt('1000000000000000000');
 };
 
 /**

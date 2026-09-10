@@ -146,7 +146,7 @@ function Description() {
     <StyledDescription>
       <m.div variants={varFade().in}>
         <Typography variant="h2" sx={{ textAlign: 'center' }}>
-         👻 First Private Memecoin Launchpad on StarkNet
+         Memecoin Launchpad on BOT Chain
         </Typography>
       </m.div>
 
@@ -166,7 +166,7 @@ function Description() {
 
       <m.div variants={varFade().in}>
         <Typography variant="body2" sx={{ textAlign: 'center' }}>
-        &ldquo;Trade like a ghost. Pump like a god.&rdquo; Launch and trade memecoins with complete privacy using zero-knowledge proofs, stealth addresses, and encrypted state. Every transaction is untraceable and unidentifiable.
+        Launch and trade memecoins on BOT Chain against native BOT. Linear bonding curve. No simulated balances. No fake stats.
         </Typography>
       </m.div>
 

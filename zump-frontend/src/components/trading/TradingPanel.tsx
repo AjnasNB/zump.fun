@@ -58,7 +58,7 @@ export default function TradingPanel({
   poolAddress,
   tokenAddress,
   tokenSymbol,
-  quoteSymbol = 'STRK',
+  quoteSymbol = 'BOT',
   currentPrice,
   isMigrated = false,
   onTradeSuccess,

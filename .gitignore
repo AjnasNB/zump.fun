@@ -33,3 +33,8 @@ build/
 CONNECTION_DOCUMENTATION.md
 DEPLOYMENT_GUIDE.md
 RPC_SETUP.md
+
+# Foundry artifacts (source + deployed.json are committed)
+contracts/cache/
+contracts/out/
+contracts/broadcast/

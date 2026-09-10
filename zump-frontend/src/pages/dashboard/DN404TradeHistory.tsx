@@ -4,7 +4,6 @@
  * Requirements: 7.1, 7.2, 7.3, 7.4, 7.5
  */
 
-import { Helmet } from 'react-helmet-async';
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
@@ -312,10 +311,6 @@ export default function DN404TradeHistory({ poolAddress: propPoolAddress }: DN40
 
   return (
     <div style={{ width: '100%' }}>
-      <Helmet>
-        <title>Trade History | Zump.fun</title>
-      </Helmet>
-
       <Container maxWidth={themeStretch ? false : 'lg'}>
         {/* Analytics Cards */}
         <Card sx={{ mb: 5 }}>

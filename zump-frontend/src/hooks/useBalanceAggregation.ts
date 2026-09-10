@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useAccount } from '@starknet-react/core';
+import { useAccount } from '../providers/BotChainProvider';
 import { StealthBalance, AggregatedBalance } from '../@types/privacy';
 import { useStealthAddress } from './useStealthAddress';
 
@@ -169,7 +169,7 @@ export function useBalanceAggregation(): UseBalanceAggregationReturn {
         for (const token of SUPPORTED_TOKENS) {
           // In production, this would call the token contract's balanceOf
           // For now, generate mock balances for demo
-          const mockBalance = generateMockBalance();
+          const mockBalance = '0';
           
           if (mockBalance !== '0') {
             newBalances.push({
@@ -248,11 +248,6 @@ function getTokenDecimals(symbol: string): number {
 
 // Helper: Generate mock balance for demo
 function generateMockBalance(): string {
-  // 70% chance of having a balance
-  if (Math.random() > 0.3) {
-    const amount = Math.floor(Math.random() * 1000000000000000000); // Up to 1 token
-    return amount.toString();
-  }
   return '0';
 }
 

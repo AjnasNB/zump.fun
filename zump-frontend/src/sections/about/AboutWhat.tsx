@@ -85,10 +85,7 @@ export default function AboutWhat() {
                   color: theme.palette.mode === 'light' ? 'text.secondary' : 'common.white',
                 }}
               >
-                Zump.fun is the first untraceable, privacy-focused memecoin launchpad on Starknet. 
-                Using cutting-edge zero-knowledge technology (Noir zkContracts, Garaga proofs, and Ztarknet encrypted state), 
-                we enable traders to launch and trade memecoins with complete anonymity. Every transaction is untraceable, 
-                every position is private, and every wallet is unlinkable. Trade like a ghost. Pump like a god.
+                Zump.fun is a memecoin launchpad on BOT Chain. Creators deploy an ERC-20 clone in one transaction, then anyone can buy and sell against a linear bonding curve priced in native BOT. A 1% fee goes to the protocol on every trade.
               </Typography>
             </m.div>
 

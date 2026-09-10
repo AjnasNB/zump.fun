@@ -59,8 +59,8 @@ export default function AboutHero() {
                 fontWeight: 'fontWeightMedium',
               }}
             >
-              Building the future of private trading
-              <br /> on Starknet with zero-knowledge technology
+              Building a simple token launchpad
+              <br /> on BOT Chain
             </Typography>
           </m.div>
         </StyledContent>

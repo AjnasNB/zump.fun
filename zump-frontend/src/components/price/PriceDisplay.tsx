@@ -169,7 +169,7 @@ export const PriceDisplay: React.FC<PriceDisplayProps> = ({
   size = 'medium',
   decimals = 18,
   displayDecimals = 4,
-  quoteSymbol = 'STRK',
+  quoteSymbol = 'BOT',
   onPriceChange,
 }) => {
   const [animate, setAnimate] = useState(false);

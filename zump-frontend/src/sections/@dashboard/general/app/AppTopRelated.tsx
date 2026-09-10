@@ -77,7 +77,7 @@ function ApplicationItem({ app }: ApplicationItemProps) {
           </Typography>
 
           <Label variant="soft" color={price === 0 ? 'success' : 'error'}>
-            {fCurrency(Math.random())}
+            {fCurrency(price)}
           </Label>
         </Stack>
       </Box>

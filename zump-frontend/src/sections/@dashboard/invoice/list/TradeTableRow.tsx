@@ -61,15 +61,11 @@ function formatPrice(price: bigint, decimals: number = 18): string {
  * Get explorer URL for transaction
  */
 function getExplorerTxUrl(txHash: string): string {
-  // Starknet Sepolia explorer
-  return `https://sepolia.starkscan.co/tx/${txHash}`;
+  return `https://scan.botchain.ai/tx/${txHash}`;
 }
 
-/**
- * Get explorer URL for address
- */
 function getExplorerAddressUrl(address: string): string {
-  return `https://sepolia.starkscan.co/contract/${address}`;
+  return `https://scan.botchain.ai/address/${address}`;
 }
 
 // ===========================================

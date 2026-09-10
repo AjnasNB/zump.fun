@@ -1,25 +1,11 @@
-/**
- * Contract Service
- * Centralized service for interacting with Starknet contracts
- * Requirements: 1.2, 1.3, 1.4
- */
-
-import { Contract, Account, RpcProvider, CallData, cairo, shortString } from 'starknet';
-import { 
-  PUMP_FACTORY_ABI, 
-  BONDING_CURVE_POOL_ABI, 
-  MEMECOIN_TOKEN_ABI,
-  STEALTH_ADDRESS_GENERATOR_ABI,
-  NULLIFIER_REGISTRY_ABI,
-  COMMITMENT_TREE_ABI,
-  DARK_POOL_MIXER_ABI,
-  PRIVACY_RELAYER_ABI,
-} from '../abi';
-import { getContractConfig, getContractAddresses, isValidContractAddress, NetworkId } from '../config/contracts';
-
-// ============================================================================
-// Types
-// ============================================================================
+import { ethers } from 'ethers';
+import { PUMP_FACTORY_ABI, MEME_TOKEN_ABI } from '../abi/evm';
+import {
+  getContractConfig,
+  getContractAddresses,
+  isValidContractAddress,
+  NetworkId,
+} from '../config/contracts';
 
 export interface LaunchParams {
   name: string;
@@ -27,8 +13,8 @@ export interface LaunchParams {
   basePrice: bigint;
   slope: bigint;
   maxSupply: bigint;
-  stealthCreator: string;
-  migrationThreshold: bigint;
+  stealthCreator?: string;
+  migrationThreshold?: bigint;
 }
 
 export interface LaunchResult {
@@ -53,14 +39,18 @@ export interface PoolConfig {
 }
 
 export interface PublicLaunchInfo {
+  id: number;
   token: string;
   pool: string;
   quoteToken: string;
   name: string;
   symbol: string;
+  creator: string;
   basePrice: bigint;
   slope: bigint;
   maxSupply: bigint;
+  tokensSold: bigint;
+  reserveBalance: bigint;
   createdAt: bigint;
   migrated: boolean;
 }
@@ -74,1089 +64,293 @@ export interface TransactionResult {
 
 export type TransactionStatus = 'pending' | 'confirmed' | 'failed';
 
-// ============================================================================
-// Contract Service Class
-// ============================================================================
+const LEGACY_GAS_PRICE = ethers.utils.parseUnits('20', 'gwei');
+
+function toBigInt(value: ethers.BigNumberish): bigint {
+  return BigInt(ethers.BigNumber.from(value).toString());
+}
+
+function asAddress(value: unknown): string {
+  if (typeof value === 'string' && value.startsWith('0x')) return value;
+  return ethers.constants.AddressZero;
+}
+
+function unwrapLaunch(row: any): {
+  token: string;
+  creator: string;
+  basePrice: bigint;
+  slope: bigint;
+  maxSupply: bigint;
+  tokensSold: bigint;
+  reserveBalance: bigint;
+  createdAt: bigint;
+} {
+  const inner = row?.token != null ? row : row?.[0]?.token != null ? row[0] : row;
+  return {
+    token: asAddress(inner.token ?? inner[0]),
+    creator: asAddress(inner.creator ?? inner[1]),
+    basePrice: toBigInt(inner.basePrice ?? inner[2] ?? 0),
+    slope: toBigInt(inner.slope ?? inner[3] ?? 0),
+    maxSupply: toBigInt(inner.maxSupply ?? inner[4] ?? 0),
+    tokensSold: toBigInt(inner.tokensSold ?? inner[5] ?? 0),
+    reserveBalance: toBigInt(inner.reserveBalance ?? inner[6] ?? 0),
+    createdAt: toBigInt(inner.createdAt ?? inner[7] ?? 0),
+  };
+}
 
 export class ContractService {
-  private provider: RpcProvider;
+  private readProvider: ethers.providers.JsonRpcProvider;
 
-  private account: Account | null = null;
+  private signer: ethers.Signer | null = null;
 
-  private network: NetworkId;
-
-  private pumpFactoryContract: Contract | null = null;
-
-  private stealthGeneratorContract: Contract | null = null;
-
-  private nullifierRegistryContract: Contract | null = null;
-
-  private commitmentTreeContract: Contract | null = null;
-
-  private darkPoolMixerContract: Contract | null = null;
-
-  private privacyRelayerContract: Contract | null = null;
-
-  constructor(network?: NetworkId) {
-    this.network = network || 'sepolia';
-    const config = getContractConfig(this.network);
-    this.provider = new RpcProvider({ nodeUrl: config.rpcUrl });
+  constructor(_network?: NetworkId) {
+    const config = getContractConfig();
+    this.readProvider = new ethers.providers.JsonRpcProvider(config.rpcUrl);
   }
 
-  // =========================================================================
-  // Account Management
-  // =========================================================================
-
-  /**
-   * Set the connected account for transactions
-   * Requirements: 1.2
-   */
-  setAccount(account: Account): void {
-    this.account = account;
-    // Reset cached contracts when account changes
-    this.pumpFactoryContract = null;
-    this.stealthGeneratorContract = null;
-    this.nullifierRegistryContract = null;
-    this.commitmentTreeContract = null;
-    this.darkPoolMixerContract = null;
-    this.privacyRelayerContract = null;
+  setAccount(signer: ethers.Signer | null): void {
+    this.signer = signer;
   }
 
-  /**
-   * Get the current account
-   */
-  getAccount(): Account | null {
-    return this.account;
+  getAccount(): ethers.Signer | null {
+    return this.signer;
   }
 
-  /**
-   * Check if an account is connected
-   */
   isConnected(): boolean {
-    return this.account !== null;
+    return this.signer !== null;
   }
 
-  // =========================================================================
-  // Contract Instance Creation
-  // =========================================================================
-
-  /**
-   * Get PumpFactory contract instance
-   * Requirements: 1.3
-   */
-  getPumpFactoryContract(): Contract {
-    const addresses = getContractAddresses(this.network);
-    
-    if (!isValidContractAddress(addresses.pumpFactory)) {
-      throw new Error('PumpFactory contract address not configured');
-    }
-
-    if (!this.pumpFactoryContract) {
-      this.pumpFactoryContract = new Contract(
-        PUMP_FACTORY_ABI,
-        addresses.pumpFactory,
-        this.account || this.provider
-      );
-    }
-
-    return this.pumpFactoryContract;
+  private getProvider(): ethers.providers.Provider {
+    return this.signer?.provider || this.readProvider;
   }
 
-  /**
-   * Get BondingCurvePool contract instance for a specific pool
-   * Requirements: 1.3
-   */
-  getBondingCurvePoolContract(poolAddress: string): Contract {
-    if (!isValidContractAddress(poolAddress)) {
-      throw new Error('Invalid pool address');
+  private factory(withSigner = false): ethers.Contract {
+    const { pumpFactory } = getContractAddresses();
+    if (!isValidContractAddress(pumpFactory)) {
+      throw new Error('Pump factory address is not configured');
     }
-
-    return new Contract(
-      BONDING_CURVE_POOL_ABI,
-      poolAddress,
-      this.account || this.provider
-    );
+    const runner = withSigner ? this.signer || this.getProvider() : this.getProvider();
+    return new ethers.Contract(pumpFactory, PUMP_FACTORY_ABI, runner);
   }
 
-  /**
-   * Get MemecoinToken contract instance for a specific token
-   * Requirements: 1.3
-   */
-  getTokenContract(tokenAddress: string): Contract {
-    if (!isValidContractAddress(tokenAddress)) {
-      throw new Error('Invalid token address');
-    }
-
-    return new Contract(
-      MEMECOIN_TOKEN_ABI,
-      tokenAddress,
-      this.account || this.provider
-    );
+  private token(address: string, withSigner = false): ethers.Contract {
+    const runner = withSigner ? this.signer || this.getProvider() : this.getProvider();
+    return new ethers.Contract(address, MEME_TOKEN_ABI, runner);
   }
 
-  // =========================================================================
-  // Privacy Contract Instances
-  // =========================================================================
-
-  /**
-   * Get StealthAddressGenerator contract instance
-   */
-  getStealthGeneratorContract(): Contract {
-    const addresses = getContractAddresses(this.network);
-    
-    if (!isValidContractAddress(addresses.stealthAddressGenerator)) {
-      throw new Error('StealthAddressGenerator contract address not configured');
-    }
-
-    if (!this.stealthGeneratorContract) {
-      this.stealthGeneratorContract = new Contract(
-        STEALTH_ADDRESS_GENERATOR_ABI,
-        addresses.stealthAddressGenerator,
-        this.account || this.provider
-      );
-    }
-
-    return this.stealthGeneratorContract;
-  }
-
-  /**
-   * Get NullifierRegistry contract instance
-   */
-  getNullifierRegistryContract(): Contract {
-    const addresses = getContractAddresses(this.network);
-    
-    if (!isValidContractAddress(addresses.nullifierRegistry)) {
-      throw new Error('NullifierRegistry contract address not configured');
-    }
-
-    if (!this.nullifierRegistryContract) {
-      this.nullifierRegistryContract = new Contract(
-        NULLIFIER_REGISTRY_ABI,
-        addresses.nullifierRegistry,
-        this.account || this.provider
-      );
-    }
-
-    return this.nullifierRegistryContract;
-  }
-
-  /**
-   * Get CommitmentTree contract instance
-   */
-  getCommitmentTreeContract(): Contract {
-    const addresses = getContractAddresses(this.network);
-    
-    if (!isValidContractAddress(addresses.commitmentTree)) {
-      throw new Error('CommitmentTree contract address not configured');
-    }
-
-    if (!this.commitmentTreeContract) {
-      this.commitmentTreeContract = new Contract(
-        COMMITMENT_TREE_ABI,
-        addresses.commitmentTree,
-        this.account || this.provider
-      );
-    }
-
-    return this.commitmentTreeContract;
-  }
-
-  /**
-   * Get DarkPoolMixer contract instance
-   */
-  getDarkPoolMixerContract(): Contract {
-    const addresses = getContractAddresses(this.network);
-    
-    if (!isValidContractAddress(addresses.darkPoolMixer)) {
-      throw new Error('DarkPoolMixer contract address not configured');
-    }
-
-    if (!this.darkPoolMixerContract) {
-      this.darkPoolMixerContract = new Contract(
-        DARK_POOL_MIXER_ABI,
-        addresses.darkPoolMixer,
-        this.account || this.provider
-      );
-    }
-
-    return this.darkPoolMixerContract;
-  }
-
-  /**
-   * Get PrivacyRelayer contract instance
-   */
-  getPrivacyRelayerContract(): Contract {
-    const addresses = getContractAddresses(this.network);
-    
-    if (!isValidContractAddress(addresses.privacyRelayer)) {
-      throw new Error('PrivacyRelayer contract address not configured');
-    }
-
-    if (!this.privacyRelayerContract) {
-      this.privacyRelayerContract = new Contract(
-        PRIVACY_RELAYER_ABI,
-        addresses.privacyRelayer,
-        this.account || this.provider
-      );
-    }
-
-    return this.privacyRelayerContract;
-  }
-
-  // =========================================================================
-  // Stealth Address Methods
-  // =========================================================================
-
-  /**
-   * Generate a fresh stealth address via contract
-   */
-  async generateFreshStealthAddress(): Promise<{ address: string; txHash: string }> {
-    if (!this.account) {
-      throw new Error('Account not connected');
-    }
-
-    const stealth = this.getStealthGeneratorContract();
-    const tx = await stealth.invoke('generate_fresh_stealth', []);
-    
-    const receipt = await this.waitForTransaction(tx.transaction_hash);
-    
-    // Extract stealth address from events
-    const stealthAddress = this.extractStealthAddressFromReceipt(receipt);
-    
-    return {
-      address: stealthAddress || '0x0',
-      txHash: tx.transaction_hash,
+  private txOverrides(value?: ethers.BigNumberish) {
+    const overrides: ethers.PayableOverrides = {
+      gasPrice: LEGACY_GAS_PRICE,
     };
+    if (value !== undefined) overrides.value = value;
+    return overrides;
   }
 
-  /**
-   * Generate stealth address with full parameters
-   */
-  async generateStealthAddress(
-    spendingPubkey: string,
-    viewingPubkey: string,
-    ephemeralRandom: string
-  ): Promise<{ address: string; viewTag: string; ephemeralPubkey: string; txHash: string }> {
-    if (!this.account) {
-      throw new Error('Account not connected');
+  async getLaunchCount(): Promise<number> {
+    const count = await this.factory().launchCount();
+    return Number(count.toString());
+  }
+
+  async getTotalLaunches(): Promise<bigint> {
+    return BigInt(await this.getLaunchCount());
+  }
+
+  async resolveLaunchId(tokenAddress: string): Promise<number> {
+    const stored = await this.factory().launchIdOf(tokenAddress);
+    const idPlusOne = Number(stored.toString());
+    if (!idPlusOne) {
+      throw new Error('Launch not found for token');
     }
-
-    const stealth = this.getStealthGeneratorContract();
-    const tx = await stealth.invoke('generate_stealth_address', [
-      spendingPubkey,
-      viewingPubkey,
-      ephemeralRandom,
-    ]);
-    
-    const receipt = await this.waitForTransaction(tx.transaction_hash);
-    
-    // Extract data from events
-    const eventData = this.extractStealthGeneratedEvent(receipt);
-    
-    return {
-      address: eventData?.stealthAddress || '0x0',
-      viewTag: eventData?.viewTag || '0x0',
-      ephemeralPubkey: eventData?.ephemeralPubkey || '0x0',
-      txHash: tx.transaction_hash,
-    };
+    return idPlusOne - 1;
   }
 
-  /**
-   * Check if an address is a valid stealth address
-   */
-  async isValidStealthAddress(address: string): Promise<boolean> {
-    const stealth = this.getStealthGeneratorContract();
-    const result = await stealth.call('is_valid_stealth', [address]);
-    return Boolean(result);
+  async getLaunchByToken(tokenAddress: string): Promise<PublicLaunchInfo> {
+    const id = await this.resolveLaunchId(tokenAddress);
+    return this.getLaunch(id);
   }
 
-  /**
-   * Get stealth address by view tag
-   */
-  async getStealthByViewTag(viewTag: string): Promise<string> {
-    const stealth = this.getStealthGeneratorContract();
-    const result = await stealth.call('get_stealth_by_view_tag', [viewTag]);
-    return result?.toString() || '0x0';
-  }
-
-  // =========================================================================
-  // Nullifier Registry Methods
-  // =========================================================================
-
-  /**
-   * Check if a nullifier is spent
-   */
-  async isNullifierSpent(nullifier: string): Promise<boolean> {
-    const registry = this.getNullifierRegistryContract();
-    const result = await registry.call('is_spent', [nullifier]);
-    return Boolean(result);
-  }
-
-  /**
-   * Get total spent nullifiers count
-   */
-  async getTotalSpentNullifiers(): Promise<bigint> {
-    const registry = this.getNullifierRegistryContract();
-    const result = await registry.call('get_total_spent');
-    return this.parseU256(result);
-  }
-
-  // =========================================================================
-  // Commitment Tree Methods
-  // =========================================================================
-
-  /**
-   * Get current Merkle root
-   */
-  async getCurrentMerkleRoot(): Promise<string> {
-    const tree = this.getCommitmentTreeContract();
-    const result = await tree.call('get_current_root');
-    return result?.toString() || '0x0';
-  }
-
-  /**
-   * Get total leaf count in tree
-   */
-  async getMerkleTreeLeafCount(): Promise<bigint> {
-    const tree = this.getCommitmentTreeContract();
-    const result = await tree.call('get_leaf_count');
-    return this.parseU256(result);
-  }
-
-  /**
-   * Verify a Merkle proof
-   */
-  async verifyMerkleProof(
-    leaf: string,
-    leafIndex: bigint,
-    proof: string[],
-    root: string
-  ): Promise<boolean> {
-    const tree = this.getCommitmentTreeContract();
-    const result = await tree.call('verify_proof', [
-      leaf,
-      cairo.uint256(leafIndex),
-      proof,
-      root,
-    ]);
-    return Boolean(result);
-  }
-
-  // =========================================================================
-  // DarkPool Mixer Methods
-  // =========================================================================
-
-  /**
-   * Get DarkPool mixer fee (in basis points)
-   */
-  async getMixerFee(): Promise<bigint> {
-    const mixer = this.getDarkPoolMixerContract();
-    const result = await mixer.call('get_fee_bps');
-    return this.parseU256(result);
-  }
-
-  /**
-   * Get amount after fee deduction
-   */
-  async getAmountAfterFee(amount: bigint): Promise<bigint> {
-    const mixer = this.getDarkPoolMixerContract();
-    const result = await mixer.call('get_amount_after_fee', [cairo.uint256(amount)]);
-    return this.parseU256(result);
-  }
-
-  /**
-   * Check if a token is supported by the mixer
-   */
-  async isTokenSupportedByMixer(tokenAddress: string): Promise<boolean> {
-    const mixer = this.getDarkPoolMixerContract();
-    const result = await mixer.call('is_token_supported', [tokenAddress]);
-    return Boolean(result);
-  }
-
-  /**
-   * Get mixer deposit limits
-   */
-  async getMixerLimits(): Promise<{ min: bigint; max: bigint }> {
-    const mixer = this.getDarkPoolMixerContract();
-    const [min, max] = await Promise.all([
-      mixer.call('get_min_deposit'),
-      mixer.call('get_max_deposit'),
-    ]);
-    return {
-      min: this.parseU256(min),
-      max: this.parseU256(max),
-    };
-  }
-
-  // =========================================================================
-  // Helper Methods for Privacy Events
-  // =========================================================================
-
-  /**
-   * Extract stealth address from receipt events
-   */
-  private extractStealthAddressFromReceipt(receipt: any): string | null {
-    try {
-      const events = receipt.events || [];
-      const event = events.find((e: any) => e.keys && e.data);
-      if (event && event.data && event.data[0]) {
-        return event.data[0].toString();
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Extract StealthAddressGenerated event data
-   */
-  private extractStealthGeneratedEvent(receipt: any): {
-    stealthAddress: string;
-    viewTag: string;
-    ephemeralPubkey: string;
-  } | null {
-    try {
-      const events = receipt.events || [];
-      const event = events.find((e: any) => e.keys && e.data);
-      if (event && event.data) {
-        return {
-          stealthAddress: event.data[0]?.toString() || '0x0',
-          viewTag: event.data[1]?.toString() || '0x0',
-          ephemeralPubkey: event.data[2]?.toString() || '0x0',
-        };
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  }
-
-  // =========================================================================
-  // PumpFactory Methods
-  // =========================================================================
-
-  /**
-   * Create a new token launch
-   * Requirements: 2.1
-   */
-  async createLaunch(params: LaunchParams): Promise<LaunchResult> {
-    if (!this.account) {
-      throw new Error('Account not connected');
-    }
-
-    const factory = this.getPumpFactoryContract();
-    
-    // Convert string to felt252 for name and symbol
-    const nameAsFelt = shortString.encodeShortString(params.name);
-    const symbolAsFelt = shortString.encodeShortString(params.symbol);
-
-    const calldata = CallData.compile({
-      name: nameAsFelt,
-      symbol: symbolAsFelt,
-      base_price: cairo.uint256(params.basePrice),
-      slope: cairo.uint256(params.slope),
-      max_supply: cairo.uint256(params.maxSupply),
-      stealth_creator: params.stealthCreator,
-      migration_threshold: cairo.uint256(params.migrationThreshold),
-    });
-
-    const tx = await factory.invoke('create_launch', calldata);
-    
-    // Wait for transaction confirmation
-    const receipt = await this.waitForTransaction(tx.transaction_hash);
-    
-    // Extract addresses from events (LaunchCreated event)
-    const launchEvent = this.extractLaunchCreatedEvent(receipt);
-    
-    return {
-      transactionHash: tx.transaction_hash,
-      tokenAddress: launchEvent?.token || '0x0',
-      poolAddress: launchEvent?.pool || '0x0',
-      launchId: launchEvent?.launchId || BigInt(0),
-    };
-  }
-
-  /**
-   * Check if address is a valid deployed contract (not a mock)
-   */
-  private isValidDeployedAddress(address: string): boolean {
-    if (!address || address === '0x0') return false;
-    
-    // Convert to BigInt to check if it's a mock address (small numbers like 1000-9999)
-    try {
-      const addrBigInt = BigInt(address);
-      // Mock addresses are small numbers, real addresses are much larger
-      // A real Starknet address should be at least 40+ hex chars (160+ bits)
-      if (addrBigInt < BigInt('0x10000000000000000')) {
-        console.warn(`Skipping mock address: ${address}`);
-        return false;
-      }
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Get all launches from PumpFactory
-   * Requirements: 3.1
-   */
-  async getAllLaunches(): Promise<PublicLaunchInfo[]> {
-    const factory = this.getPumpFactoryContract();
-    
-    // Get total launches count
-    const totalLaunches = await factory.call('total_launches');
-    const count = BigInt(totalLaunches.toString());
-    
-    const launches: PublicLaunchInfo[] = [];
-    
-    // Fetch each launch
-    // eslint-disable-next-line no-restricted-syntax
-    for (let i = BigInt(0); i < count; i += BigInt(1)) {
+  async getLaunch(id: number): Promise<PublicLaunchInfo> {
+    const parsed = unwrapLaunch(await this.factory().getLaunch(id));
+    let name = 'Unknown Token';
+    let symbol = '???';
+    if (parsed.token !== ethers.constants.AddressZero) {
       try {
-        // eslint-disable-next-line no-await-in-loop
-        const launch = await this.getLaunch(i);
-        
-        // Filter out mock/invalid addresses
-        if (this.isValidDeployedAddress(launch.token) && this.isValidDeployedAddress(launch.pool)) {
-          launches.push(launch);
-        } else {
-          console.warn(`Skipping launch ${i} with mock addresses: token=${launch.token}, pool=${launch.pool}`);
-        }
-      } catch (error) {
-        console.error(`Failed to fetch launch ${i}:`, error);
+        const erc20 = this.token(parsed.token);
+        [name, symbol] = await Promise.all([erc20.name(), erc20.symbol()]);
+      } catch {
+        // token metadata is optional if RPC flakes
       }
     }
-    
+
+    return {
+      id,
+      token: parsed.token,
+      pool: parsed.token,
+      quoteToken: 'BOT',
+      name,
+      symbol,
+      creator: parsed.creator,
+      basePrice: parsed.basePrice,
+      slope: parsed.slope,
+      maxSupply: parsed.maxSupply,
+      tokensSold: parsed.tokensSold,
+      reserveBalance: parsed.reserveBalance,
+      createdAt: parsed.createdAt,
+      migrated: false,
+    };
+  }
+
+  async getAllLaunches(): Promise<PublicLaunchInfo[]> {
+    const count = await this.getLaunchCount();
+    if (count === 0) return [];
+    const launches = await Promise.all(
+      Array.from({ length: count }, (_, i) => this.getLaunch(i))
+    );
     return launches;
   }
 
-  /**
-   * Get a specific launch by ID
-   */
-  async getLaunch(launchId: bigint | number): Promise<PublicLaunchInfo> {
-    const factory = this.getPumpFactoryContract();
-    const id = typeof launchId === 'number' ? BigInt(launchId) : launchId;
-    
-    const result = await factory.call('get_launch', [cairo.uint256(id)]);
-    
-    return this.parsePublicLaunchInfo(result);
+  async getPoolState(tokenAddress: string): Promise<PoolState> {
+    const launch = await this.getLaunch(await this.resolveLaunchId(tokenAddress));
+    return {
+      token: launch.token,
+      quoteToken: launch.quoteToken,
+      tokensSold: launch.tokensSold,
+      reserveBalance: launch.reserveBalance,
+      migrated: false,
+    };
   }
 
-  /**
-   * Get total number of launches
-   */
-  async getTotalLaunches(): Promise<bigint> {
-    const factory = this.getPumpFactoryContract();
-    const result = await factory.call('total_launches');
-    return BigInt(result.toString());
+  async getPoolConfig(tokenAddress: string): Promise<PoolConfig> {
+    const launch = await this.getLaunch(await this.resolveLaunchId(tokenAddress));
+    return {
+      basePrice: launch.basePrice,
+      slope: launch.slope,
+      maxSupply: launch.maxSupply,
+    };
   }
 
-  // =========================================================================
-  // BondingCurvePool Methods
-  // =========================================================================
+  async getCurrentPrice(tokenAddress: string): Promise<bigint> {
+    const id = await this.resolveLaunchId(tokenAddress);
+    const price = await this.factory().currentPrice(id);
+    return toBigInt(price);
+  }
 
-  /**
-   * Get pool state
-   * Requirements: 4.1
-   */
-  async getPoolState(poolAddress: string): Promise<PoolState> {
-    // Validate pool address
-    if (!poolAddress || poolAddress === '0x0' || poolAddress === '0') {
-      throw new Error('Invalid pool address');
+  async getBuyCost(_poolOrToken: string, amountTokens: bigint): Promise<bigint> {
+    const id = await this.resolveLaunchId(_poolOrToken);
+    const [cost] = await this.factory().quoteBuy(id, amountTokens.toString());
+    return toBigInt(cost);
+  }
+
+  async getSellReturn(_poolOrToken: string, amountTokens: bigint): Promise<bigint> {
+    const id = await this.resolveLaunchId(_poolOrToken);
+    const [refund] = await this.factory().quoteSell(id, amountTokens.toString());
+    return toBigInt(refund);
+  }
+
+  async getBalance(tokenAddress: string, owner: string): Promise<bigint> {
+    if (tokenAddress.toUpperCase() === 'BOT' || tokenAddress === ethers.constants.AddressZero) {
+      const bal = await this.getProvider().getBalance(owner);
+      return toBigInt(bal);
     }
-    
-    const pool = this.getBondingCurvePoolContract(poolAddress);
-    const result = await pool.call('get_state');
-    
-    return this.parsePoolState(result);
+    const bal = await this.token(tokenAddress).balanceOf(owner);
+    return toBigInt(bal);
   }
 
-  /**
-   * Get pool configuration (base_price, slope, max_supply)
-   */
-  async getPoolConfig(poolAddress: string): Promise<PoolConfig> {
-    const pool = this.getBondingCurvePoolContract(poolAddress);
-    
-    const [basePrice, slope, maxSupply] = await Promise.all([
-      pool.call('base_price'),
-      pool.call('slope'),
-      pool.call('max_supply'),
-    ]);
+  async getNativeBalance(owner: string): Promise<bigint> {
+    const bal = await this.getProvider().getBalance(owner);
+    return toBigInt(bal);
+  }
+
+  async createLaunch(params: LaunchParams): Promise<LaunchResult> {
+    if (!this.signer) {
+      throw new Error('Wallet not connected');
+    }
+    const factory = this.factory(true);
+    const tx = await factory.createLaunch(
+      params.name,
+      params.symbol,
+      params.basePrice.toString(),
+      params.slope.toString(),
+      params.maxSupply.toString(),
+      this.txOverrides()
+    );
+    const receipt = await tx.wait();
+    const parsed = receipt.logs
+      .map((log: ethers.providers.Log) => {
+        try {
+          return factory.interface.parseLog(log);
+        } catch {
+          return null;
+        }
+      })
+      .find((ev: ethers.utils.LogDescription | null) => ev?.name === 'LaunchCreated');
+
+    const launchId = parsed ? toBigInt(parsed.args.id) : BigInt(0);
+    const tokenAddress = parsed ? (parsed.args.token as string) : ethers.constants.AddressZero;
 
     return {
-      basePrice: this.parseU256(basePrice),
-      slope: this.parseU256(slope),
-      maxSupply: this.parseU256(maxSupply),
+      transactionHash: receipt.transactionHash,
+      tokenAddress,
+      poolAddress: tokenAddress,
+      launchId,
     };
   }
 
-  /**
-   * Get current price from pool
-   */
-  async getCurrentPrice(poolAddress: string): Promise<bigint> {
-    const pool = this.getBondingCurvePoolContract(poolAddress);
-    const result = await pool.call('get_current_price');
-    return this.parseU256(result);
-  }
-
-  /**
-   * Get buy cost for a given amount of tokens
-   * Requirements: 5.1
-   * 
-   * Calculates the cost using the bonding curve integral:
-   * cost = base_price * amount + slope * (current_sold + amount)^2 / 2 - slope * current_sold^2 / 2
-   * 
-   * All values are in 18 decimals. We need proper scaling to avoid overflow.
-   */
-  async getBuyCost(poolAddress: string, amountTokens: bigint): Promise<bigint> {
-    const pool = this.getBondingCurvePoolContract(poolAddress);
-    
-    // Get current pool state and config
-    const [state, basePrice, slope] = await Promise.all([
-      pool.call('get_state'),
-      pool.call('base_price'),
-      pool.call('slope'),
-    ]);
-    
-    const stateObj = this.parsePoolState(state);
-    const tokensSold = stateObj.tokensSold;
-    const base = this.parseU256(basePrice);
-    const s = this.parseU256(slope);
-    const amount = BigInt(amountTokens);
-    
-    // Debug logging
-    console.log('getBuyCost debug:', {
-      tokensSold: tokensSold.toString(),
-      basePrice: base.toString(),
-      slope: s.toString(),
-      amount: amount.toString(),
-    });
-    
-    // Decimal scaling factor (10^18)
-    const DECIMALS = BigInt('1000000000000000000');
-    
-    // Calculate cost using bonding curve integral
-    // cost = base_price * amount + slope * ((current + amount)^2 - current^2) / 2
-    const currentSold = tokensSold;
-    const newSold = currentSold + amount;
-    
-    // Linear component: base_price * amount / 10^18
-    const linearCost = (base * amount) / DECIMALS;
-    
-    // Quadratic component needs double scaling because we're squaring 18-decimal values
-    // (newSold^2 - currentSold^2) results in 36-decimal value, need to divide by 10^36
-    // Then multiply by slope (18 decimals) and divide by 2
-    // Final: slope * squareDiff / 2 / 10^36 = slope * squareDiff / (2 * 10^18 * 10^18)
-    const newSoldScaled = newSold / DECIMALS; // Convert to actual token count
-    const currentSoldScaled = currentSold / DECIMALS;
-    const squareDiffScaled = newSoldScaled * newSoldScaled - currentSoldScaled * currentSoldScaled;
-    
-    // quadraticCost = slope * squareDiff / 2 (slope is in 18 decimals, result is in 18 decimals)
-    const quadraticCost = (s * squareDiffScaled) / BigInt(2);
-    
-    return linearCost + quadraticCost;
-  }
-
-  /**
-   * Get sell return for a given amount of tokens
-   * Requirements: 6.1
-   * 
-   * Calculates the return using the bonding curve integral:
-   * return = base_price * amount + slope * current_sold^2 / 2 - slope * (current_sold - amount)^2 / 2
-   * 
-   * All values are in 18 decimals. We need proper scaling to avoid overflow.
-   */
-  async getSellReturn(poolAddress: string, amountTokens: bigint): Promise<bigint> {
-    // For simulation mode, use hardcoded bonding curve params
-    // since pool contracts are not deployed
-    const base = BigInt('1000000000000'); // 0.000001 STRK base price
-    const s = BigInt('100000000000');     // slope
-    const amount = BigInt(amountTokens);
-    
-    console.log('getSellReturn simulation:', {
-      poolAddress,
-      amount: amount.toString(),
-      basePrice: base.toString(),
-      slope: s.toString(),
-    });
-    
-    // Decimal scaling factor (10^18)
-    const DECIMALS = BigInt('1000000000000000000');
-    
-    // In simulation mode, we assume the user is selling tokens they bought
-    // So currentSold = amount (they bought this much), newSold = 0 (after selling all)
-    // For partial sells, we use amount as the sold portion
-    const currentSold = amount;
-    const newSold = BigInt(0);
-    
-    // Linear component: base_price * amount / 10^18
-    const linearReturn = (base * amount) / DECIMALS;
-    
-    // Quadratic component - scale down before squaring to avoid overflow
-    const currentSoldScaled = currentSold / DECIMALS;
-    const newSoldScaled = newSold / DECIMALS;
-    const squareDiffScaled = currentSoldScaled * currentSoldScaled - newSoldScaled * newSoldScaled;
-    
-    // quadraticReturn = slope * squareDiff / 2
-    const quadraticReturn = (s * squareDiffScaled) / BigInt(2);
-    
-    return linearReturn + quadraticReturn;
-  }
-
-  /**
-   * Buy tokens from bonding curve
-   * Requirements: 5.2
-   */
-  async buy(poolAddress: string, amountTokens: bigint): Promise<TransactionResult> {
-    if (!this.account) {
-      throw new Error('Account not connected');
+  async buy(tokenAddress: string, amount: bigint): Promise<TransactionResult> {
+    if (!this.signer) {
+      throw new Error('Wallet not connected');
     }
-
-    const pool = this.getBondingCurvePoolContract(poolAddress);
-    
-    const tx = await pool.invoke('buy', [cairo.uint256(amountTokens)]);
-    
-    await this.waitForTransaction(tx.transaction_hash);
-    
+    const id = await this.resolveLaunchId(tokenAddress);
+    const factory = this.factory(true);
+    const [cost] = await factory.quoteBuy(id, amount.toString());
+    const tx = await factory.buy(id, amount.toString(), this.txOverrides(cost));
+    const receipt = await tx.wait();
     return {
-      hash: tx.transaction_hash,
-      status: 'confirmed',
+      hash: receipt.transactionHash,
+      status: receipt.status === 1 ? 'confirmed' : 'failed',
+      blockNumber: receipt.blockNumber,
     };
   }
 
-  /**
-   * Sell tokens to bonding curve
-   * Requirements: 6.2
-   */
-  async sell(poolAddress: string, amountTokens: bigint): Promise<TransactionResult> {
-    if (!this.account) {
-      throw new Error('Account not connected');
+  async sell(tokenAddress: string, amount: bigint): Promise<TransactionResult> {
+    if (!this.signer) {
+      throw new Error('Wallet not connected');
     }
-
-    const pool = this.getBondingCurvePoolContract(poolAddress);
-    
-    const tx = await pool.invoke('sell', [cairo.uint256(amountTokens)]);
-    
-    await this.waitForTransaction(tx.transaction_hash);
-    
+    const id = await this.resolveLaunchId(tokenAddress);
+    const factory = this.factory(true);
+    const tx = await factory.sell(id, amount.toString(), this.txOverrides());
+    const receipt = await tx.wait();
     return {
-      hash: tx.transaction_hash,
-      status: 'confirmed',
+      hash: receipt.transactionHash,
+      status: receipt.status === 1 ? 'confirmed' : 'failed',
+      blockNumber: receipt.blockNumber,
     };
   }
 
-  // =========================================================================
-  // Token Methods
-  // =========================================================================
-
-  /**
-   * Get token balance for a user
-   * Requirements: 9.1
-   */
-  async getBalance(tokenAddress: string, userAddress: string): Promise<bigint> {
-    // Use minimal ERC20 ABI for balance check
-    // Try balance_of first (Starknet/Cairo convention), then balanceOf (OpenZeppelin)
-    const ABI_BALANCE_OF = [
-      {
-        name: 'balance_of',
-        type: 'function',
-        inputs: [{ name: 'account', type: 'felt' }],
-        outputs: [{ type: 'Uint256' }],
-        state_mutability: 'view',
-      },
-    ];
-    
-    const ABI_BALANCEOF = [
-      {
-        name: 'balanceOf',
-        type: 'function',
-        inputs: [{ name: 'account', type: 'felt' }],
-        outputs: [{ type: 'Uint256' }],
-        state_mutability: 'view',
-      },
-    ];
-    
-    // Try balance_of first (Cairo convention used in our MemecoinToken and STRK)
-    try {
-      const token = new Contract(ABI_BALANCE_OF as any, tokenAddress, this.provider);
-      const result = await token.call('balance_of', [userAddress]);
-      return this.parseU256(result);
-    } catch (err1) {
-      // Try balanceOf (OpenZeppelin convention)
-      try {
-        const token = new Contract(ABI_BALANCEOF as any, tokenAddress, this.provider);
-        const result = await token.call('balanceOf', [userAddress]);
-        return this.parseU256(result);
-      } catch (err2) {
-        console.error('Failed to get balance with both methods:', { err1, err2 });
-        return BigInt(0);
-      }
+  async waitForTransaction(hash: string): Promise<TransactionResult> {
+    const receipt = await this.getProvider().waitForTransaction(hash);
+    if (!receipt) {
+      return { hash, status: 'pending' };
     }
-  }
-
-  /**
-   * Approve token spending
-   * Requirements: 5.2, 6.2
-   */
-  async approve(tokenAddress: string, spender: string, amount: bigint): Promise<TransactionResult> {
-    if (!this.account) {
-      throw new Error('Account not connected');
-    }
-
-    // Use minimal ERC20 ABI for approve
-    const ABI_APPROVE = [
-      {
-        name: 'approve',
-        type: 'function',
-        inputs: [
-          { name: 'spender', type: 'felt' },
-          { name: 'amount', type: 'Uint256' },
-        ],
-        outputs: [{ type: 'felt' }],
-        state_mutability: 'external',
-      },
-    ];
-    
-    const token = new Contract(ABI_APPROVE as any, tokenAddress, this.account);
-    
-    const tx = await token.invoke('approve', [spender, cairo.uint256(amount)]);
-    
-    return this.waitForTransaction(tx.transaction_hash);
-  }
-
-  /**
-   * Get token allowance
-   */
-  async getAllowance(tokenAddress: string, owner: string, spender: string): Promise<bigint> {
-    // Use minimal ERC20 ABI for allowance check
-    const ABI_ALLOWANCE = [
-      {
-        name: 'allowance',
-        type: 'function',
-        inputs: [
-          { name: 'owner', type: 'felt' },
-          { name: 'spender', type: 'felt' },
-        ],
-        outputs: [{ type: 'Uint256' }],
-        state_mutability: 'view',
-      },
-    ];
-    
-    const token = new Contract(ABI_ALLOWANCE as any, tokenAddress, this.provider);
-    
-    try {
-      const result = await token.call('allowance', [owner, spender]);
-      return this.parseU256(result);
-    } catch (err) {
-      console.error('Failed to get allowance:', err);
-      return BigInt(0);
-    }
-  }
-
-  // =========================================================================
-  // Transaction Status Tracking
-  // =========================================================================
-
-  /**
-   * Wait for transaction confirmation
-   * Requirements: 1.4
-   */
-  async waitForTransaction(txHash: string): Promise<any> {
-    try {
-      console.log('Waiting for transaction:', txHash);
-      
-      const receipt = await this.provider.waitForTransaction(txHash, {
-        retryInterval: 2000,
-      });
-
-      console.log('Transaction receipt received:', receipt);
-      
-      const isSuccess = receipt.isSuccess();
-      
-      if (!isSuccess) {
-        console.error('Transaction failed:', receipt);
-        throw new Error('Transaction reverted');
-      }
-      
-      // Return the full receipt for event parsing
-      return receipt;
-    } catch (error) {
-      console.error('Error waiting for transaction:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get transaction status
-   * Requirements: 1.4
-   */
-  async getTransactionStatus(txHash: string): Promise<TransactionStatus> {
-    try {
-      const receipt = await this.provider.getTransactionReceipt(txHash);
-      
-      if (!receipt) {
-        return 'pending';
-      }
-
-      return receipt.isSuccess() ? 'confirmed' : 'failed';
-    } catch {
-      return 'pending';
-    }
-  }
-
-  // =========================================================================
-  // Helper Methods
-  // =========================================================================
-
-  /**
-   * Parse u256 from contract response
-   */
-  // eslint-disable-next-line class-methods-use-this
-  private parseU256(value: any): bigint {
-    if (typeof value === 'bigint') {
-      return value;
-    }
-    if (typeof value === 'object' && 'low' in value && 'high' in value) {
-      const low = BigInt(value.low.toString());
-      const high = BigInt(value.high.toString());
-      // eslint-disable-next-line no-bitwise
-      return low + (high << BigInt(128));
-    }
-    return BigInt(value.toString());
-  }
-
-  /**
-   * Parse PoolState from contract response
-   */
-  private parsePoolState(result: any): PoolState {
     return {
-      token: result.token?.toString() || '0x0',
-      quoteToken: result.quote_token?.toString() || '0x0',
-      tokensSold: this.parseU256(result.tokens_sold),
-      reserveBalance: this.parseU256(result.reserve_balance),
-      migrated: Boolean(result.migrated),
+      hash,
+      status: receipt.status === 1 ? 'confirmed' : 'failed',
+      blockNumber: receipt.blockNumber,
     };
-  }
-
-  /**
-   * Parse PublicLaunchInfo from contract response
-   */
-  private parsePublicLaunchInfo(result: any): PublicLaunchInfo {
-    // Helper to convert felt252 to hex address
-    const toHexAddress = (value: any): string => {
-      if (!value) return '0x0';
-      const bigIntValue = BigInt(value.toString());
-      return `0x${bigIntValue.toString(16).padStart(64, '0')}`;
-    };
-    
-    return {
-      token: toHexAddress(result.token),
-      pool: toHexAddress(result.pool),
-      quoteToken: toHexAddress(result.quote_token),
-      name: shortString.decodeShortString(result.name?.toString() || '0x0'),
-      symbol: shortString.decodeShortString(result.symbol?.toString() || '0x0'),
-      basePrice: this.parseU256(result.base_price),
-      slope: this.parseU256(result.slope),
-      maxSupply: this.parseU256(result.max_supply),
-      createdAt: BigInt(result.created_at?.toString() || '0'),
-      migrated: Boolean(result.migrated),
-    };
-  }
-
-  /**
-   * Extract LaunchCreated event from transaction receipt
-   */
-  private extractLaunchCreatedEvent(receipt: any): { launchId: bigint; token: string; pool: string } | null {
-    try {
-      console.log('Parsing receipt for LaunchCreated event:', JSON.stringify(receipt, null, 2));
-      
-      const events = receipt.events || [];
-      console.log(`Found ${events.length} events in receipt`);
-      
-      const addresses = getContractAddresses(this.network);
-      const factoryAddress = addresses.pumpFactory.toLowerCase();
-      console.log('Looking for events from factory:', factoryAddress);
-      
-      // Log all event addresses for debugging
-      events.forEach((e: any, i: number) => {
-        console.log(`Event ${i}: from=${e.from_address}, keys=${e.keys?.length}, data=${e.data?.length}`);
-      });
-      
-      // Find LaunchCreated event from factory contract
-      const launchEvent = events.find((event: any) => {
-        const fromAddr = event.from_address?.toLowerCase();
-        return fromAddr === factoryAddress && event.keys && event.keys.length >= 3 && event.data && event.data.length >= 3;
-      });
-      
-      if (launchEvent) {
-        console.log('Found LaunchCreated event from factory:', launchEvent);
-        
-        // Cairo event structure:
-        // #[derive(Drop, starknet::Event)]
-        // pub struct LaunchCreated {
-        //     #[key]
-        //     pub launch_id: u256,           // keys[1], keys[2] (u256 = 2 felts)
-        //     pub token: ContractAddress,    // data[0]
-        //     pub pool: ContractAddress,     // data[1]
-        //     pub stealth_creator: ContractAddress, // data[2]
-        //     pub migration_threshold: u256, // data[3], data[4]
-        // }
-        
-        // Parse launch_id from keys (u256 = low, high)
-        const launchIdLow = BigInt(launchEvent.keys[1]?.toString() || '0');
-        const launchIdHigh = BigInt(launchEvent.keys[2]?.toString() || '0');
-        const launchId = launchIdLow + (launchIdHigh << BigInt(128));
-        
-        // Parse addresses from data
-        const tokenFelt = BigInt(launchEvent.data[0]?.toString() || '0');
-        const poolFelt = BigInt(launchEvent.data[1]?.toString() || '0');
-        
-        // Convert felt252 to hex address format
-        const token = `0x${tokenFelt.toString(16).padStart(64, '0')}`;
-        const pool = `0x${poolFelt.toString(16).padStart(64, '0')}`;
-        
-        const result = {
-          launchId,
-          token,
-          pool,
-        };
-        
-        console.log('Parsed event data:', result);
-        return result;
-      }
-      
-      console.warn('No LaunchCreated event found in receipt');
-      return null;
-    } catch (error) {
-      console.error('Error parsing LaunchCreated event:', error);
-      return null;
-    }
   }
 }
 
-// ============================================================================
-// Singleton Instance
-// ============================================================================
+let singleton: ContractService | null = null;
 
-let contractServiceInstance: ContractService | null = null;
-
-/**
- * Get or create ContractService singleton
- */
-export const getContractService = (network?: NetworkId): ContractService => {
-  if (!contractServiceInstance) {
-    contractServiceInstance = new ContractService(network);
+export function getContractService(): ContractService {
+  if (!singleton) {
+    singleton = new ContractService();
   }
-  return contractServiceInstance;
-};
+  return singleton;
+}
 
-/**
- * Reset ContractService instance (useful for testing or network changes)
- */
-export const resetContractService = (): void => {
-  contractServiceInstance = null;
-};
+export function resetContractService(): void {
+  singleton = null;
+}
 
 export default ContractService;
